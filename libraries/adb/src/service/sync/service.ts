@@ -3,7 +3,7 @@ import { MaybeConsumable } from "@yume-chan/stream-extra";
 
 import type { Adb } from "../../adb.js";
 import { AdbFeature } from "../../features.js";
-import "../../utils/array-from-async.js";
+import { arrayFromAsync } from "../../utils/array-from-async.js";
 import { escapeArg } from "../subprocess/index.js";
 
 import type { LinuxFileType } from "./android.js";
@@ -192,7 +192,7 @@ export class Service {
     }
 
     readdir(path: string) {
-        return Array.fromAsync(this.opendir(path));
+        return arrayFromAsync(this.opendir(path));
     }
 
     /**

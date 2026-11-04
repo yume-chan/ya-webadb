@@ -515,8 +515,8 @@ export class Logcat {
             }
 
             if (options.pid !== undefined) {
-                if (!Number.isSafeInteger(options.pid) || options.pid < 0) {
-                    throw new Error("PID must be a non-negative integer");
+                if (!Number.isSafeInteger(options.pid) || options.pid <= 0) {
+                    throw new Error("PID must be a positive integer");
                 }
                 args.push("--pid", options.pid.toString());
             }

@@ -7,7 +7,7 @@ import type {
 } from "@yume-chan/stream-extra";
 import { concatUint8Arrays } from "@yume-chan/stream-extra";
 
-import "../../../utils/array-from-async.js";
+import { arrayFromAsync } from "../../../utils/array-from-async.js";
 import type { AdbSubprocessSpawner } from "../types.js";
 import {
     createLazyPromise,
@@ -70,8 +70,8 @@ export function adbShellProtocolSpawner(
                 try {
                     const [, stdout, stderr, exitCode] = await Promise.all([
                         options?.stdin?.pipeTo(process.stdin),
-                        Array.fromAsync(process.stdout),
-                        Array.fromAsync(process.stderr),
+                        arrayFromAsync(process.stdout),
+                        arrayFromAsync(process.stderr),
                         process.exited,
                     ]);
                     return {

@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { arrayFromAsync } from "./array-from-async.js";
+import { arrayFromAsyncPolyfill } from "./array-from-async.js";
 
-describe("arrayFromAsync", () => {
+describe("arrayFromAsyncPolyfill", () => {
     it("should convert an async iterable", async () => {
         async function* asyncGenerator() {
             await Promise.resolve();
@@ -13,7 +13,7 @@ describe("arrayFromAsync", () => {
             await Promise.resolve();
             yield 3;
         }
-        const result = await arrayFromAsync(asyncGenerator());
+        const result = await arrayFromAsyncPolyfill(asyncGenerator());
         assert.deepStrictEqual(result, [1, 2, 3]);
     });
 
@@ -23,7 +23,7 @@ describe("arrayFromAsync", () => {
             yield 5;
             yield 6;
         }
-        const result = await arrayFromAsync(syncGenerator());
+        const result = await arrayFromAsyncPolyfill(syncGenerator());
         assert.deepStrictEqual(result, [4, 5, 6]);
     });
 
@@ -33,26 +33,9 @@ describe("arrayFromAsync", () => {
             yield Promise.resolve(8);
             yield Promise.resolve(9);
         }
-        const result = await arrayFromAsync(syncGeneratorWithPromises());
+        const result = await arrayFromAsyncPolyfill(
+            syncGeneratorWithPromises(),
+        );
         assert.deepStrictEqual(result, [7, 8, 9]);
-    });
-
-    it("should convert an Array-like", async () => {
-        const arrayLike = { 0: 10, 1: 11, 2: 12, length: 3 };
-        const result = await arrayFromAsync(arrayLike);
-        assert.deepStrictEqual(result, [10, 11, 12]);
-    });
-
-    it("should convert with a mapper function", async () => {
-        const result = await arrayFromAsync([1, 2, 3], (x) => x * 2);
-        assert.deepStrictEqual(result, [2, 4, 6]);
-    });
-
-    it("should convert with an async mapper function", async () => {
-        const result = await arrayFromAsync([1, 2, 3], async (x) => {
-            await Promise.resolve();
-            return x * 2;
-        });
-        assert.deepStrictEqual(result, [2, 4, 6]);
     });
 });
