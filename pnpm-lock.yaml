@@ -54,8 +54,8 @@ importers:
   libraries/adb:
     dependencies:
       '@yume-chan/async':
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^4.2.2
+        version: 4.2.2
       '@yume-chan/event':
         specifier: workspace:*
         version: link:../event
@@ -147,8 +147,8 @@ importers:
         specifier: workspace:*
         version: link:../adb
       '@yume-chan/async':
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^4.2.2
+        version: 4.2.2
       '@yume-chan/stream-extra':
         specifier: workspace:*
         version: link:../stream-extra
@@ -215,8 +215,8 @@ importers:
         specifier: workspace:*
         version: link:../adb
       '@yume-chan/async':
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^4.2.2
+        version: 4.2.2
       '@yume-chan/event':
         specifier: workspace:*
         version: link:../event
@@ -255,8 +255,8 @@ importers:
         specifier: workspace:*
         version: link:../adb
       '@yume-chan/async':
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^4.2.2
+        version: 4.2.2
       '@yume-chan/stream-extra':
         specifier: workspace:*
         version: link:../stream-extra
@@ -327,8 +327,8 @@ importers:
   libraries/event:
     dependencies:
       '@yume-chan/async':
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^4.2.2
+        version: 4.2.2
     devDependencies:
       '@types/node':
         specifier: ^26.6.6
@@ -413,8 +413,8 @@ importers:
   libraries/scrcpy:
     dependencies:
       '@yume-chan/async':
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^4.2.2
+        version: 4.2.2
       '@yume-chan/event':
         specifier: workspace:*
         version: link:../event
@@ -447,8 +447,8 @@ importers:
   libraries/scrcpy-decoder-h264bsd:
     dependencies:
       '@yume-chan/async':
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^4.2.2
+        version: 4.2.2
       '@yume-chan/event':
         specifier: workspace:*
         version: link:../event
@@ -490,8 +490,8 @@ importers:
   libraries/scrcpy-decoder-shared:
     dependencies:
       '@yume-chan/async':
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^4.2.2
+        version: 4.2.2
       '@yume-chan/event':
         specifier: workspace:*
         version: link:../event
@@ -515,8 +515,8 @@ importers:
   libraries/scrcpy-decoder-webcodecs:
     dependencies:
       '@yume-chan/async':
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^4.2.2
+        version: 4.2.2
       '@yume-chan/event':
         specifier: workspace:*
         version: link:../event
@@ -549,8 +549,8 @@ importers:
   libraries/stream-extra:
     dependencies:
       '@yume-chan/async':
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^4.2.2
+        version: 4.2.2
       '@yume-chan/struct':
         specifier: workspace:*
         version: link:../struct
@@ -574,8 +574,8 @@ importers:
   libraries/struct:
     dependencies:
       '@yume-chan/async':
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^4.2.2
+        version: 4.2.2
       '@yume-chan/no-data-view':
         specifier: workspace:*
         version: link:../no-data-view
@@ -1215,8 +1215,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@yume-chan/async@4.2.0':
-    resolution: {integrity: sha512-PNDd/MkgKMJ/+Yz0U4nYjhM1uh0zfEf0VMZkDHD93B0bcR16gMCQXHuKHvQWRU9EjzpkOO4DZeAXYcH+Kj+YPA==}
+  '@yume-chan/async@4.2.2':
+    resolution: {integrity: sha512-sF4nd/GZKgLVhACPHW2KY6JBiFXVVLZtCy+P42XTM5LPBy57+hj4+jumdEUr46f+MUOQhe8eyiuB1P6QOew/xQ==}
 
   '@yume-chan/h264bsd@1.1.1':
     resolution: {integrity: sha512-WVx6klhioI8t9aE2d3IeZ/zND40kH24z7vSM33UnXquSXSOkIEPUqBFc9VcdZWOKwFDk5EwOwZFqXrByZMto9w==}
@@ -2104,7 +2104,7 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.12.2':
     optional: true
 
-  '@yume-chan/async@4.2.0': {}
+  '@yume-chan/async@4.2.2': {}
 
   '@yume-chan/h264bsd@1.1.1': {}
 

@@ -34,7 +34,7 @@
     },
     "dependencies": {
         "@yume-chan/adb": "workspace:*",
-        "@yume-chan/async": "^4.2.0",
+        "@yume-chan/async": "^4.2.2",
         "@yume-chan/event": "workspace:*",
         "@yume-chan/media-codec": "workspace:*",
         "@yume-chan/scrcpy": "workspace:*",

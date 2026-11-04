@@ -1,8 +1,3 @@
-/* #__NO_SIDE_EFFECTS__ */
-export const NOOP = () => {
-    // no-op
-};
-
 /**
  * When used in `Promise#catch`, means the promise should never throw errors.
  * An explicit way to suppress ESLint floating promise warnings.
