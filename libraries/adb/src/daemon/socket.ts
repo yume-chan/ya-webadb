@@ -1,4 +1,4 @@
-import { PromiseResolver } from "@yume-chan/async";
+import { noop, PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type {
     PushReadableStreamController,
@@ -99,7 +99,7 @@ export class AdbDaemonSocketController
 
             controller.abortSignal.addEventListener(
                 "abort",
-                () => void this.close(),
+                () => void this.close().catch(noop),
                 { once: true },
             );
         });

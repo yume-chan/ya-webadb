@@ -6,7 +6,7 @@ export async function arrayFromAsync(
     const result = [];
     let index = 0;
     for await (const item of items) {
-        result.push(mapFn ? mapFn.call(thisArg, item, index) : item);
+        result.push(mapFn ? await mapFn.call(thisArg, item, index) : item);
         index += 1;
     }
     return result;
