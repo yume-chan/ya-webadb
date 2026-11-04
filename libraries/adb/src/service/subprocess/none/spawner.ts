@@ -12,7 +12,6 @@ import {
     createLazyPromise,
     decodeUtf8Chunked,
     splitCommand,
-    ToArrayStream,
 } from "../utils.js";
 
 export interface AdbNoneProtocolProcess {
@@ -58,7 +57,7 @@ export function adbNoneProtocolSpawner(
                 try {
                     const [, output] = await Promise.all([
                         options?.stdin?.pipeTo(process.stdin),
-                        process.output.pipeThrough(new ToArrayStream()),
+                        Array.fromAsync(process.output),
                     ]);
                     return output;
                 } finally {

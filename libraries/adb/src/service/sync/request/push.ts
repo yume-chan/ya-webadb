@@ -1,4 +1,4 @@
-import { PromiseResolver } from "@yume-chan/async";
+import { PromiseResolver, suppressUnhandledRejection } from "@yume-chan/async";
 import type {
     TransformStream,
     WritableStream,
@@ -11,7 +11,6 @@ import {
 } from "@yume-chan/stream-extra";
 import { struct, u32 } from "@yume-chan/struct";
 
-import { NOOP } from "../../../utils/no-op.js";
 import { LinuxFileType } from "../android.js";
 import { Compression } from "../compression/index.js";
 import { RequestId, ResponseId } from "../id/index.js";
@@ -101,12 +100,12 @@ class SendWritableStream extends MaybeConsumable.WritableStream<Uint8Array> {
             },
         });
 
+        suppressUnhandledRejection(this.#resolver.promise);
+
         this.#pool = pool;
         this.#socket = socket;
 
         this.#controller = controller;
-        // Suppress unhandled rejection warning when the promise is not awaited.
-        this.#resolver.promise.catch(NOOP);
     }
 
     #trySetError(reason: unknown) {

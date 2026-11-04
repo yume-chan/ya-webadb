@@ -6,5 +6,8 @@ packages:
 allowBuilds:
   unrs-resolver: true
 
+minimumReleaseAgeExclude:
+  - '@yume-chan/async@4.2.0'
+
 onlyBuiltDependencies:
   - unrs-resolver

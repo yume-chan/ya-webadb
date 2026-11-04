@@ -206,9 +206,6 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
     }
 
     override dispose() {
-        // Don't await this!
-        // `reverse.remove`'s response will never arrive
-        // before we read all pending data from Scrcpy streams
         // NOOP: failed to remove reverse tunnel is not a big deal
         this.adb.reverse.remove(this.#address).catch(NOOP);
     }

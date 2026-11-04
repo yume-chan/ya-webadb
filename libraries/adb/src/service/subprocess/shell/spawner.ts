@@ -12,7 +12,6 @@ import {
     createLazyPromise,
     decodeUtf8Chunked,
     splitCommand,
-    ToArrayStream,
 } from "../utils.js";
 
 export interface AdbShellProtocolProcess {
@@ -70,8 +69,8 @@ export function adbShellProtocolSpawner(
                 try {
                     const [, stdout, stderr, exitCode] = await Promise.all([
                         options?.stdin?.pipeTo(process.stdin),
-                        process.stdout.pipeThrough(new ToArrayStream()),
-                        process.stderr.pipeThrough(new ToArrayStream()),
+                        Array.fromAsync(process.stdout),
+                        Array.fromAsync(process.stderr),
                         process.exited,
                     ]);
                     return {

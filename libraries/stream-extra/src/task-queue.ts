@@ -1,5 +1,5 @@
 import type { MaybePromise, MaybePromiseLike } from "@yume-chan/async";
-import { isPromiseLike } from "@yume-chan/async";
+import { isPromiseLike, suppressUnhandledRejection } from "@yume-chan/async";
 
 export class TaskQueue {
     #ready: PromiseLike<unknown> | undefined;
@@ -37,8 +37,7 @@ export class TaskQueue {
                 if (bail) {
                     // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                     const promise = Promise.reject(e);
-                    // Suppress unhandled-rejection without resolving `#ready`
-                    void promise.catch(() => {});
+                    suppressUnhandledRejection(promise);
                     this.#ready = promise;
                 }
                 throw e;
