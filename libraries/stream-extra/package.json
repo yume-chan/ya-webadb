@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/stream-extra",
-    "version": "3.0.0-beta.4",
+    "version": "3.0.0-beta.5",
     "description": "Extensions to Web Streams API",
     "keywords": [
         "stream",
