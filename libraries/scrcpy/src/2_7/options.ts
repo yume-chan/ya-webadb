@@ -33,6 +33,7 @@ import {
     createMediaStreamTransformer,
     createScrollController,
     Defaults,
+    DeviceMessageParser,
     parseAudioCodecOption,
     parseAudioMetadataCodec,
     parseAudioStreamMetadata,
@@ -41,7 +42,6 @@ import {
     parseVideoCodecOption,
     parseVideoStreamMetadata,
     parseVideoStreamMetadataAsync,
-    ScrcpyDeviceMessageParser2_4,
     serialize,
     serializeBackOrScreenOnControlMessage,
     serializeInjectTouchControlMessage,
@@ -70,15 +70,19 @@ export class ScrcpyOptions2_7<TInit extends Init = Init>
         this.value = computeOptionValues(init, Defaults);
     }
 
-    createDeviceMessageParser(): MapBoolean<
-        ScrcpyOptions2_7.Value<TInit>["control"],
-        ScrcpyDeviceMessageParser2_4<ScrcpyOptions2_7.Value<TInit>>,
+    get createDeviceMessageParser(): MapBoolean<
+        this["value"]["control"],
+        () => DeviceMessageParser<this["value"]>,
         undefined
     > {
-        return new ScrcpyDeviceMessageParser2_4<ScrcpyOptions2_7.Value<TInit>>(
-            this.value.clipboardAutosync,
-            this.value.control,
-        ) as never;
+        return (this.value.control
+            ? () =>
+                  new DeviceMessageParser<this["value"]>(
+                      this.value.clipboardAutosync,
+                      this.value.control,
+                  )
+            : undefined) satisfies
+            (() => DeviceMessageParser<this["value"]>) | undefined as never;
     }
 
     serialize(): string[] {
@@ -189,9 +193,7 @@ export class ScrcpyOptions2_7<TInit extends Init = Init>
 
     createUHidManager(
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
-        deviceMessageParser: ScrcpyDeviceMessageParser2_4<
-            ScrcpyOptions2_7.Value<TInit>
-        >,
+        deviceMessageParser: DeviceMessageParser<ScrcpyOptions2_7.Value<TInit>>,
     ): MapBoolean<
         ScrcpyOptions2_7.Value<TInit>["control"],
         UHidManager<ScrcpyOptions2_7.Value<TInit>>,

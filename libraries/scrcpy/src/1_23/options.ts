@@ -26,11 +26,11 @@ import {
     createMediaStreamTransformer,
     createScrollController,
     Defaults,
+    DeviceMessageParser,
     EncoderRegex,
     parseDisplay,
     parseEncoder,
     parseVideoStreamMetadata,
-    ScrcpyDeviceMessageParser1_21,
     serialize,
     serializeBackOrScreenOnControlMessage,
     serializeInjectTouchControlMessage,
@@ -57,14 +57,19 @@ export class ScrcpyOptions1_23<TInit extends Init = Init>
         this.value = computeOptionValues(init, Defaults);
     }
 
-    createDeviceMessageParser(): MapBoolean<
-        ScrcpyOptions1_23.Value<TInit>["control"],
-        ScrcpyDeviceMessageParser1_21<ScrcpyOptions1_23.Value<TInit>>,
+    get createDeviceMessageParser(): MapBoolean<
+        this["value"]["control"],
+        () => DeviceMessageParser<this["value"]>,
         undefined
     > {
-        return new ScrcpyDeviceMessageParser1_21<
-            ScrcpyOptions1_23.Value<TInit>
-        >(this.value.clipboardAutosync, this.value.control) as never;
+        return (this.value.control
+            ? () =>
+                  new DeviceMessageParser<this["value"]>(
+                      this.value.clipboardAutosync,
+                      this.value.control,
+                  )
+            : undefined) satisfies
+            (() => DeviceMessageParser<this["value"]>) | undefined as never;
     }
 
     serialize(): string[] {

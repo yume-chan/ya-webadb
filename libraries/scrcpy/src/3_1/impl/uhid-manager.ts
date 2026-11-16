@@ -4,7 +4,6 @@ import type {
 } from "@yume-chan/stream-extra";
 import { Consumable } from "@yume-chan/stream-extra";
 
-import type { ScrcpyDeviceMessageParser2_4 } from "../../2_4/impl/device-message-parser.js";
 import type { ScrcpyOptions } from "../../base/index.js";
 import {
     ScrcpyUHidDestroyControlMessage,
@@ -16,10 +15,12 @@ import type { ScrcpyUHidOutputDeviceMessage } from "../../latest.js";
 
 import { serializeUHidCreateControlMessage } from "./serialize-uhid-create.js";
 
+import type { DeviceMessageParser } from "./index.js";
+
 export class UHidManager<T extends Pick<ScrcpyOptions3_1.Init, "control">> {
     #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
     #options: ScrcpyOptions<T>;
-    #deviceMessageParser: ScrcpyDeviceMessageParser2_4<T>;
+    #deviceMessageParser: DeviceMessageParser<T>;
 
     #devices = new Map<number, UHidDevice<T>>();
     #sparseIds = new Set<number>();
@@ -27,7 +28,7 @@ export class UHidManager<T extends Pick<ScrcpyOptions3_1.Init, "control">> {
     constructor(
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
         options: ScrcpyOptions<T>,
-        deviceMessageParser: ScrcpyDeviceMessageParser2_4<T>,
+        deviceMessageParser: DeviceMessageParser<T>,
     ) {
         if (!options.value.control) {
             throw new Error("control is disabled");
@@ -110,7 +111,7 @@ export class UHidDevice<T extends object> {
         return this.#options;
     }
 
-    #deviceMessageParser: ScrcpyDeviceMessageParser2_4<T>;
+    #deviceMessageParser: DeviceMessageParser<T>;
     get deviceMessageParser() {
         return this.#deviceMessageParser;
     }
@@ -151,7 +152,7 @@ export class UHidDevice<T extends object> {
     constructor(
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
         options: ScrcpyOptions<T>,
-        deviceMessageParser: ScrcpyDeviceMessageParser2_4<T>,
+        deviceMessageParser: DeviceMessageParser<T>,
         id: number,
         name: string,
         vendorId: number,

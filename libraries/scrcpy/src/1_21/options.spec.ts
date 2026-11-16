@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { ScrcpyDeviceMessageParser1_15 } from "../1_15/impl/device-message-parser.js";
+import { DeviceMessageParser } from "../1_15/impl/device-message-parser.js";
 import { AndroidAvcProfile } from "../video/index.js";
 
 import {
@@ -64,7 +64,7 @@ describe("ScrcpyOptions1_21", () => {
 
         it("should reject a parser without acknowledgment support", () => {
             const options = new ScrcpyOptions1_21({ control: true });
-            const parser = new ScrcpyDeviceMessageParser1_15(true, true);
+            const parser = new DeviceMessageParser(true, true);
 
             assert.throws(() =>
                 options.serializeSetClipboardControlMessage(

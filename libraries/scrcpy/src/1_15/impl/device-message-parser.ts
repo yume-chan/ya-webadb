@@ -7,7 +7,7 @@ import type {
 
 import { ClipboardStream } from "./clipboard-stream.js";
 
-export class ScrcpyDeviceMessageParser1_15<
+export class DeviceMessageParser<
     TOptions extends object,
 > implements ScrcpyDeviceMessageParser {
     #clipboard: ClipboardStream | undefined;

@@ -1,12 +1,12 @@
 import type { AsyncExactReadable } from "@yume-chan/struct";
 
-import { ScrcpyDeviceMessageParser1_21 } from "../../1_21/impl/device-message-parser.js";
 import type { ScrcpyDeviceMessageParser } from "../../base/device-message.js";
 
+import { PrevImpl } from "./prev.js";
 import { UHidOutputStream } from "./uhid-output-stream.js";
 
-export class ScrcpyDeviceMessageParser2_4<TOptions extends object>
-    extends ScrcpyDeviceMessageParser1_21<TOptions>
+export class DeviceMessageParser<TOptions extends object>
+    extends PrevImpl.DeviceMessageParser<TOptions>
     implements ScrcpyDeviceMessageParser
 {
     #uHidOutput: UHidOutputStream;

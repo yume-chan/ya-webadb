@@ -33,7 +33,7 @@ export interface ScrcpyOptions<T extends object> {
 
     value: T;
 
-    createDeviceMessageParser(): ScrcpyDeviceMessageParser | undefined;
+    createDeviceMessageParser: (() => ScrcpyDeviceMessageParser) | undefined;
 
     serialize(): string[];
 

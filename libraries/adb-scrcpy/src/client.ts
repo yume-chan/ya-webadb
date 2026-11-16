@@ -79,8 +79,7 @@ interface AdbScrcpyClientInit<
     videoStream: ReadableStream<Uint8Array> | undefined;
     audioStream: ReadableStream<Uint8Array> | undefined;
     controlStream:
-        | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
-        | undefined;
+        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>> | undefined;
 }
 
 export interface AdbScrcpyAudioStreamSuccessMetadata extends Omit<
@@ -94,9 +93,6 @@ export type AdbScrcpyAudioStreamMetadata =
     | ScrcpyAudioStreamDisabledMetadata
     | ScrcpyAudioStreamErroredMetadata
     | AdbScrcpyAudioStreamSuccessMetadata;
-
-type PropertyOrUndefined<T, K extends PropertyKey> =
-    T extends Record<K, infer V> ? V : undefined;
 
 export class AdbScrcpyClient<
     TOptions extends AdbScrcpyOptions<Pick<ScrcpyOptions1_15.Init, "control">>,
@@ -308,16 +304,17 @@ export class AdbScrcpyClient<
         return this.#controller as never;
     }
 
-    get deviceMessageParser(): ReturnType<
-        TOptions["createDeviceMessageParser"]
-    > {
+    get deviceMessageParser(): TOptions["createDeviceMessageParser"] extends
+        (() => infer R) | undefined
+        ? R
+        : undefined {
         return this.#deviceMessageParser as never;
     }
 
-    get clipboard(): PropertyOrUndefined<
-        ReturnType<TOptions["createDeviceMessageParser"]>,
-        "clipboard"
-    > {
+    get clipboard(): TOptions["createDeviceMessageParser"] extends
+        (() => infer R extends { clipboard: unknown }) | undefined
+        ? R["clipboard"]
+        : undefined {
         return this.#deviceMessageParser?.clipboard as never;
     }
 
@@ -341,13 +338,12 @@ export class AdbScrcpyClient<
             ? this.#createAudioStream(audioStream)
             : undefined;
 
-        // v1.15 has `controlStream` even when `options.value.control` is true
-        if (this.options.value.control && controlStream) {
+        if (options.createDeviceMessageParser && controlStream) {
             this.#deviceMessageParser = options.createDeviceMessageParser();
             this.#controller = new ScrcpyControlMessageWriter(
                 controlStream.writable.getWriter(),
                 options,
-                this.#deviceMessageParser!,
+                this.#deviceMessageParser,
             );
 
             this.#parseDeviceMessages(controlStream.readable).catch(() => {});

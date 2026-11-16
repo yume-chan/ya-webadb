@@ -10,13 +10,13 @@ import type { ScrcpyOptions2_4 } from "../../index.js";
 import { ScrcpyControlMessageType } from "../../index.js";
 import type { ScrcpyUHidOutputDeviceMessage } from "../../latest.js";
 
-import type { ScrcpyDeviceMessageParser2_4 } from "./device-message-parser.js";
+import type { DeviceMessageParser } from "./device-message-parser.js";
 import { serializeUHidCreateControlMessage } from "./serialize-uhid-create.js";
 
 export class UHidManager<T extends Pick<ScrcpyOptions2_4.Init, "control">> {
     #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
     #options: ScrcpyOptions<T>;
-    #deviceMessageParser: ScrcpyDeviceMessageParser2_4<T>;
+    #deviceMessageParser: DeviceMessageParser<T>;
     get deviceMessageParser() {
         return this.#deviceMessageParser;
     }
@@ -26,7 +26,7 @@ export class UHidManager<T extends Pick<ScrcpyOptions2_4.Init, "control">> {
     constructor(
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
         options: ScrcpyOptions<T>,
-        deviceMessageParser: ScrcpyDeviceMessageParser2_4<T>,
+        deviceMessageParser: DeviceMessageParser<T>,
     ) {
         if (!options.value.control) {
             throw new Error("control is disabled");

@@ -21,12 +21,12 @@ import type {
 
 import type { ComputeOptionTypes, Init } from "./impl/index.js";
 import {
-    ScrcpyDeviceMessageParser1_21,
     computeOptionValues,
     ControlMessageTypes,
     createMediaStreamTransformer,
     createScrollController,
     Defaults,
+    DeviceMessageParser,
     EncoderRegex,
     parseDisplay,
     parseEncoder,
@@ -57,14 +57,19 @@ export class ScrcpyOptions1_25<TInit extends Init = Init>
         this.value = computeOptionValues(init, Defaults);
     }
 
-    createDeviceMessageParser(): MapBoolean<
-        ScrcpyOptions1_25.Value<TInit>["control"],
-        ScrcpyDeviceMessageParser1_21<ScrcpyOptions1_25.Value<TInit>>,
+    get createDeviceMessageParser(): MapBoolean<
+        this["value"]["control"],
+        () => DeviceMessageParser<this["value"]>,
         undefined
     > {
-        return new ScrcpyDeviceMessageParser1_21<
-            ScrcpyOptions1_25.Value<TInit>
-        >(this.value.clipboardAutosync, this.value.control) as never;
+        return (this.value.control
+            ? () =>
+                  new DeviceMessageParser<this["value"]>(
+                      this.value.clipboardAutosync,
+                      this.value.control,
+                  )
+            : undefined) satisfies
+            (() => DeviceMessageParser<this["value"]>) | undefined as never;
     }
 
     serialize(): string[] {

@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "private": true,
     "type": "module",
-    "main": "eslint.config.js",
+    "main": "index.js",
     "bin": {
         "run-lint": "run-lint.js"
     },

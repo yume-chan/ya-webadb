@@ -23,9 +23,9 @@ import {
     createMediaStreamTransformer,
     createScrollController,
     Defaults,
+    DeviceMessageParser,
     parseDisplay,
     parseVideoStreamMetadata,
-    ScrcpyDeviceMessageParser1_15,
     serialize,
     serializeBackOrScreenOnControlMessage,
     serializeInjectTouchControlMessage,
@@ -50,18 +50,19 @@ export class ScrcpyOptions1_15<
         this.value = computeOptionValues(init, Defaults);
     }
 
-    createDeviceMessageParser(): MapBoolean<
-        ScrcpyOptions1_15.Value<TInit>["control"],
-        ScrcpyDeviceMessageParser1_15<ScrcpyOptions1_15.Value<TInit>>,
-        // Actually `createDeviceMessageParser` throws (returns `never`) when `control` is false,
-        // but when `control` is `boolean`, `ScrcpyDeviceMessageParser1_15 | never` collapses to
-        // just `ScrcpyDeviceMessageParser1_15`, so it's harder to notice.
-        // `undefined` is used instead to avoid that.
+    get createDeviceMessageParser(): MapBoolean<
+        this["value"]["control"],
+        () => DeviceMessageParser<this["value"]>,
         undefined
     > {
-        return new ScrcpyDeviceMessageParser1_15<
-            ScrcpyOptions1_15.Value<TInit>
-        >(true, this.value.control) as never;
+        return (this.value.control
+            ? () =>
+                  new DeviceMessageParser<this["value"]>(
+                      true,
+                      this.value.control,
+                  )
+            : undefined) satisfies
+            (() => DeviceMessageParser<this["value"]>) | undefined as never;
     }
 
     serialize(): string[] {

@@ -1,12 +1,12 @@
 import type { AsyncExactReadable } from "@yume-chan/struct";
 
-import { ScrcpyDeviceMessageParser1_15 } from "../../1_15/impl/device-message-parser.js";
 import type { ScrcpyDeviceMessageParser } from "../../base/device-message.js";
 
+import { PrevImpl } from "./prev.js";
 import { AckClipboardHandler } from "./set-clipboard.js";
 
-export class ScrcpyDeviceMessageParser1_21<TOptions extends object>
-    extends ScrcpyDeviceMessageParser1_15<TOptions>
+export class DeviceMessageParser<TOptions extends object>
+    extends PrevImpl.DeviceMessageParser<TOptions>
     implements ScrcpyDeviceMessageParser
 {
     #ackClipboardHandler: AckClipboardHandler;
