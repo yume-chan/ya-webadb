@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { DeviceMessageParser } from "../1_15/impl/device-message-parser.js";
+import { DeviceMessageParser as DeviceMessageParser1_15 } from "../1_15/impl/device-message-parser.js";
 import { AndroidAvcProfile } from "../video/index.js";
 
 import {
@@ -64,7 +64,7 @@ describe("ScrcpyOptions1_21", () => {
 
         it("should reject a parser without acknowledgment support", () => {
             const options = new ScrcpyOptions1_21({ control: true });
-            const parser = new DeviceMessageParser(true, true);
+            const parser = new DeviceMessageParser1_15(true, true);
 
             assert.throws(() =>
                 options.serializeSetClipboardControlMessage(
@@ -82,7 +82,7 @@ describe("ScrcpyOptions1_21", () => {
         it("should not create a parser when control is disabled", () => {
             const options = new ScrcpyOptions1_21({ control: false });
 
-            assert.throws(() => options.createDeviceMessageParser());
+            assert.strictEqual(options.createDeviceMessageParser, undefined);
         });
     });
 });
