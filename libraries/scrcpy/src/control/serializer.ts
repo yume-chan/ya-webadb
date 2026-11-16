@@ -21,6 +21,10 @@ import {
 
 export class ScrcpyControlMessageSerializer {
     #options: ScrcpyOptions<object>;
+    get options() {
+        return this.#options;
+    }
+
     #scrollController: ScrcpyScrollController;
 
     constructor(options: ScrcpyOptions<object>) {
@@ -31,7 +35,9 @@ export class ScrcpyControlMessageSerializer {
     getType(type: ScrcpyControlMessageType): number {
         const value = this.#options.controlMessageTypes[type];
         if (value === undefined) {
-            throw new TypeError(`Invalid control message type: ${type}`);
+            throw new TypeError(
+                `Invalid or unsupported control message type: ${type}`,
+            );
         }
         return value;
     }
@@ -126,7 +132,7 @@ export class ScrcpyControlMessageSerializer {
 
     uHidCreate(message: Omit<ScrcpyUHidCreateControlMessage, "type">) {
         if (!this.#options.serializeUHidCreateControlMessage) {
-            throw new Error("UHid not supported");
+            throw new Error("UHID not supported");
         }
 
         return this.#options.serializeUHidCreateControlMessage(

@@ -7,7 +7,7 @@ import type {
     ScrcpySetClipboardControlMessage,
     ScrcpySetDisplayPowerControlMessage,
     ScrcpyUHidCreateControlMessage,
-    ScrcpyUHidOutputDeviceMessage,
+    ScrcpyUHidOutputStream,
 } from "../latest.js";
 
 import type { ScrcpyAudioStreamMetadata } from "./audio.js";
@@ -36,8 +36,7 @@ export interface ScrcpyOptions<T extends object> {
 
     readonly clipboard?: ReadableStream<string> | undefined;
 
-    readonly uHidOutput?:
-        ReadableStream<ScrcpyUHidOutputDeviceMessage> | undefined;
+    readonly uHidOutput?: ScrcpyUHidOutputStream | undefined;
 
     readonly deviceMessageParsers: ScrcpyDeviceMessageParsers;
 

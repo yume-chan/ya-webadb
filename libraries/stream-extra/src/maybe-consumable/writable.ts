@@ -2,6 +2,7 @@ import { Consumable } from "../consumable.js";
 import type {
     QueuingStrategy,
     WritableStreamDefaultController,
+    WritableStreamDefaultWriter,
 } from "../global/index.js";
 import { WritableStream } from "../global/index.js";
 import type { MaybeConsumable } from "../maybe-consumable.js";
@@ -23,6 +24,17 @@ export interface MaybeConsumableWritableStreamSink<in T> {
 export class MaybeConsumableWritableStream<in T> extends WritableStream<
     MaybeConsumable<T>
 > {
+    static write<T>(
+        writer: WritableStreamDefaultWriter<Consumable<T>>,
+        chunk: MaybeConsumable<T>,
+    ) {
+        if (chunk instanceof Consumable) {
+            return writer.write(chunk);
+        } else {
+            return Consumable.WritableStream.write(writer, chunk);
+        }
+    }
+
     constructor(
         sink: MaybeConsumableWritableStreamSink<T>,
         strategy?: QueuingStrategy<T>,

@@ -19,6 +19,12 @@ import type { ScrcpyUHidInputControlMessage } from "./uhid.js";
 export class ScrcpyControlMessageWriter {
     #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
     #serializer: ScrcpyControlMessageSerializer;
+    get serializer() {
+        return this.#serializer;
+    }
+    get options() {
+        return this.#serializer.options;
+    }
 
     constructor(
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,

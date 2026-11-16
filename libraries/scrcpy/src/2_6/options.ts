@@ -1,5 +1,10 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
-import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
+import type {
+    Consumable,
+    ReadableStream,
+    TransformStream,
+    WritableStreamDefaultWriter,
+} from "@yume-chan/stream-extra";
 
 import type {
     MapBoolean,
@@ -19,7 +24,6 @@ import type {
     ScrcpySetClipboardControlMessage,
     ScrcpySetDisplayPowerControlMessage,
     ScrcpyUHidCreateControlMessage,
-    ScrcpyUHidOutputDeviceMessage,
 } from "../latest.js";
 
 import type { ComputeOptionTypes, Init } from "./impl/index.js";
@@ -47,6 +51,7 @@ import {
     serializeUHidCreateControlMessage,
     setListDisplays,
     setListEncoders,
+    UHidManager,
     UHidOutputStream,
 } from "./impl/index.js";
 
@@ -77,7 +82,7 @@ export class ScrcpyOptions2_6<TInit extends Init = Init>
     #uHidOutput: UHidOutputStream | undefined;
     get uHidOutput(): MapBoolean<
         this["value"]["control"],
-        ReadableStream<ScrcpyUHidOutputDeviceMessage>,
+        UHidOutputStream,
         undefined
     > {
         return this.#uHidOutput as never;
@@ -211,6 +216,12 @@ export class ScrcpyOptions2_6<TInit extends Init = Init>
             throw new Error("control is disabled");
         }
         return serializeUHidCreateControlMessage(message);
+    }
+
+    createUHidManager(
+        writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
+    ) {
+        return new UHidManager(writer, this, serializeUHidCreateControlMessage);
     }
 }
 

@@ -38,7 +38,7 @@ export class ScrcpyDeviceMessageParsers {
     async parse(id: number, stream: AsyncExactReadable): Promise<undefined> {
         const parser = this.#parsers[id];
         if (!parser) {
-            throw new Error(`Unknown device message id ${id}`);
+            throw new Error(`Unknown device message id: ${id}`);
         }
 
         return parser.parse(id, stream);
