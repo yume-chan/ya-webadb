@@ -15,6 +15,13 @@ type Equal<X, Y> =
         ? true
         : false;
 
+type PropertyOrUndefined<T, K extends PropertyKey> = T extends Record<
+    K,
+    infer V
+>
+    ? V
+    : undefined;
+
 function expectTrue<T extends true>(value?: T) { void value; }
 
 `;
@@ -55,7 +62,7 @@ function* powerSetExceptEmpty(values) {
  */
 function generateCase(control, videoSource, expectedType) {
     return `
-expectTrue<Equal<ReturnType<ScrcpyOptions2_2<{control:${control.join("|")}, videoSource:${videoSource.join("|")}}>["createDeviceMessageParser"]>["clipboard"], ${expectedType}>>();
+expectTrue<Equal<PropertyOrUndefined<ReturnType<ScrcpyOptions2_2<{control:${control.join("|")}, videoSource:${videoSource.join("|")}}>["createDeviceMessageParser"]>, "clipboard">, ${expectedType}>>();
     `.trim();
 }
 
@@ -67,7 +74,7 @@ for (const control of powerSetExceptEmpty(controlValues)) {
             (control.length === 1 && control[0] === "false") ||
             (videoSource.length === 1 && videoSource[0] === `"camera"`);
         if (controlDefinitelyDisabled) {
-            content += generateCase(control, videoSource, "never");
+            content += generateCase(control, videoSource, "undefined");
             continue;
         }
 

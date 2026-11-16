@@ -73,7 +73,7 @@ export class ScrcpyOptions3_1<TInit extends Init = Init>
     createDeviceMessageParser(): MapBoolean<
         ScrcpyOptions3_1.Value<TInit>["control"],
         ScrcpyDeviceMessageParser2_4<ScrcpyOptions3_1.Value<TInit>>,
-        never
+        undefined
     > {
         return new ScrcpyDeviceMessageParser2_4<ScrcpyOptions3_1.Value<TInit>>(
             this.value.clipboardAutosync,
@@ -192,8 +192,12 @@ export class ScrcpyOptions3_1<TInit extends Init = Init>
         deviceMessageParser: ScrcpyDeviceMessageParser2_4<
             ScrcpyOptions3_1.Value<TInit>
         >,
-    ) {
-        return new UHidManager(writer, this, deviceMessageParser);
+    ): MapBoolean<
+        ScrcpyOptions3_1.Value<TInit>["control"],
+        UHidManager<ScrcpyOptions3_1.Value<TInit>>,
+        undefined
+    > {
+        return new UHidManager(writer, this, deviceMessageParser) as never;
     }
 }
 

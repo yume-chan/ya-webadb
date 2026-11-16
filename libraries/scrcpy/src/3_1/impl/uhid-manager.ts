@@ -20,7 +20,7 @@ export class UHidManager<T extends object> {
     #options: ScrcpyOptions<T>;
     #deviceMessageParser: ScrcpyDeviceMessageParser2_4<T>;
 
-    #devices = new Map<number, Uint8Array>();
+    #devices = new Map<number, UHidDevice<T>>();
     #sparseIds = new Set<number>();
 
     constructor(
@@ -47,21 +47,15 @@ export class UHidManager<T extends object> {
             id = this.#devices.size;
         }
 
-        const message = serializeUHidCreateControlMessage({
-            type: this.#options.controlMessageTypes[
-                ScrcpyControlMessageType.UHidCreate
-            ]!,
-            id,
-            name,
-            vendorId,
-            productId,
-            data: descriptor,
-        });
-        await Consumable.WritableStream.write(this.#writer, message);
+        const cleanup = () => {
+            this.#deviceMessageParser.uHidOutput.deleteDevice(id);
+            this.#devices.delete(id);
+            this.#sparseIds.add(id);
+        };
 
         const output = this.#deviceMessageParser.uHidOutput.addDevice(id);
 
-        return new UHidDevice(
+        const device = new UHidDevice(
             this.#writer,
             this.#options,
             this.#deviceMessageParser,
@@ -71,6 +65,34 @@ export class UHidManager<T extends object> {
             productId,
             output,
         );
+        this.#devices.set(id, device);
+
+        try {
+            const message = serializeUHidCreateControlMessage({
+                type: this.#options.controlMessageTypes[
+                    ScrcpyControlMessageType.UHidCreate
+                ]!,
+                id,
+                name,
+                vendorId,
+                productId,
+                data: descriptor,
+            });
+            await Consumable.WritableStream.write(this.#writer, message);
+
+            return device;
+        } catch (e) {
+            cleanup();
+            throw e;
+        }
+    }
+
+    async close() {
+        for (const device of this.#devices.values()) {
+            await device.destroy();
+        }
+        this.#devices.clear();
+        this.#sparseIds.clear();
     }
 }
 
@@ -111,6 +133,7 @@ export class UHidDevice<T extends object> {
     get destroyed() {
         return this.#destroyed;
     }
+    #onDestroy?: (() => void) | undefined;
 
     #output: ReadableStream<ScrcpyUHidOutputDeviceMessage>;
     get output() {
@@ -127,6 +150,7 @@ export class UHidDevice<T extends object> {
         vendorId: number,
         productId: number,
         output: ReadableStream<ScrcpyUHidOutputDeviceMessage>,
+        onDestroy?: () => void,
     ) {
         this.#writer = writer;
         this.#options = options;
@@ -136,6 +160,7 @@ export class UHidDevice<T extends object> {
         this.#vendorId = vendorId;
         this.#productId = productId;
         this.#output = output;
+        this.#onDestroy = onDestroy;
     }
 
     async sendReport(report: Uint8Array) {
@@ -154,6 +179,11 @@ export class UHidDevice<T extends object> {
     }
 
     async destroy() {
+        if (this.#destroyed) {
+            return;
+        }
+        this.#destroyed = true;
+
         const message = ScrcpyUHidDestroyControlMessage.serialize({
             id: this.#id,
             type: this.#options.controlMessageTypes[
@@ -162,7 +192,6 @@ export class UHidDevice<T extends object> {
         });
         await Consumable.WritableStream.write(this.#writer, message);
 
-        this.#deviceMessageParser.uHidOutput?.deleteDevice(this.#id);
-        this.#destroyed = true;
+        this.#onDestroy?.();
     }
 }

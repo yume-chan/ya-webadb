@@ -65,7 +65,7 @@ export class ScrcpyOptions2_0<TInit extends Init = Init>
     createDeviceMessageParser(): MapBoolean<
         ScrcpyOptions2_0.Value<TInit>["control"],
         ScrcpyDeviceMessageParser1_21<ScrcpyOptions2_0.Value<TInit>>,
-        never
+        undefined
     > {
         return new ScrcpyDeviceMessageParser1_21<ScrcpyOptions2_0.Value<TInit>>(
             this.value.clipboardAutosync,

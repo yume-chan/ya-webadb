@@ -6,13 +6,14 @@ import { Consumable } from "@yume-chan/stream-extra";
 
 import type { ScrcpyOptions } from "../../base/index.js";
 import { ScrcpyUHidInputControlMessage } from "../../control/uhid.js";
+import type { ScrcpyOptions2_4 } from "../../index.js";
 import { ScrcpyControlMessageType } from "../../index.js";
 import type { ScrcpyUHidOutputDeviceMessage } from "../../latest.js";
 
 import type { ScrcpyDeviceMessageParser2_4 } from "./device-message-parser.js";
 import { serializeUHidCreateControlMessage } from "./serialize-uhid-create.js";
 
-export class UHidManager<T extends object> {
+export class UHidManager<T extends Pick<ScrcpyOptions2_4.Init, "control">> {
     #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
     #options: ScrcpyOptions<T>;
     #deviceMessageParser: ScrcpyDeviceMessageParser2_4<T>;
@@ -20,40 +21,43 @@ export class UHidManager<T extends object> {
         return this.#deviceMessageParser;
     }
 
-    #devices = new Map<number, Uint8Array>();
-    #sparseIds = new Set<number>();
+    #id = 0;
 
     constructor(
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
         options: ScrcpyOptions<T>,
         deviceMessageParser: ScrcpyDeviceMessageParser2_4<T>,
     ) {
+        if (!options.value.control) {
+            throw new Error("control is disabled");
+        }
+
         this.#writer = writer;
         this.#options = options;
         this.#deviceMessageParser = deviceMessageParser;
     }
 
     async createDevice(descriptor: Uint8Array) {
-        let id: number;
-        if (this.#sparseIds.size > 0) {
-            id = Math.min(...this.#sparseIds);
-            this.#sparseIds.delete(id);
-        } else {
-            id = this.#devices.size;
-        }
-
-        const message = serializeUHidCreateControlMessage({
-            type: this.#options.controlMessageTypes[
-                ScrcpyControlMessageType.UHidCreate
-            ]!,
-            id,
-            data: descriptor,
-        });
-        await Consumable.WritableStream.write(this.#writer, message);
+        const id = this.#id;
+        this.#id += 1;
 
         const output = this.#deviceMessageParser.uHidOutput.addDevice(id);
 
-        return new UHidDevice(this.#writer, this.#options, id, output);
+        try {
+            const message = serializeUHidCreateControlMessage({
+                type: this.#options.controlMessageTypes[
+                    ScrcpyControlMessageType.UHidCreate
+                ]!,
+                id,
+                data: descriptor,
+            });
+            await Consumable.WritableStream.write(this.#writer, message);
+
+            return new UHidDevice(this.#writer, this.#options, id, output);
+        } catch (e) {
+            this.#deviceMessageParser.uHidOutput.deleteDevice(id);
+            throw e;
+        }
     }
 }
 

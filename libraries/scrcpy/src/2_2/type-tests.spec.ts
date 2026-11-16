@@ -9,6 +9,9 @@ type Equal<X, Y> =
         ? true
         : false;
 
+type PropertyOrUndefined<T, K extends PropertyKey> =
+    T extends Record<K, infer V> ? V : undefined;
+
 function expectTrue<T extends true>(value?: T) {
     void value;
 }
@@ -16,78 +19,99 @@ function expectTrue<T extends true>(value?: T) {
 // #region control: true
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true;
-                videoSource: "display";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true;
+                    videoSource: "display";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string>
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true;
-                videoSource: "display" | "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true;
+                    videoSource: "display" | "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true;
-                videoSource: "display" | "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true;
+                    videoSource: "display" | "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true;
-                videoSource: "display" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true;
+                    videoSource: "display" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string>
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true;
-                videoSource: "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
-        never
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true;
+                    videoSource: "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
+        undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true;
-                videoSource: "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true;
+                    videoSource: "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true;
-                videoSource: undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true;
+                    videoSource: undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string>
     >
 >();
@@ -96,78 +120,99 @@ expectTrue<
 // #region control: true | false
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false;
-                videoSource: "display";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false;
+                    videoSource: "display";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false;
-                videoSource: "display" | "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false;
+                    videoSource: "display" | "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false;
-                videoSource: "display" | "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false;
+                    videoSource: "display" | "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false;
-                videoSource: "display" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false;
+                    videoSource: "display" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false;
-                videoSource: "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
-        never
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false;
+                    videoSource: "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
+        undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false;
-                videoSource: "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false;
+                    videoSource: "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false;
-                videoSource: undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false;
+                    videoSource: undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
@@ -176,78 +221,99 @@ expectTrue<
 // #region control: true | false | undefined
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false | undefined;
-                videoSource: "display";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false | undefined;
+                    videoSource: "display";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false | undefined;
-                videoSource: "display" | "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false | undefined;
+                    videoSource: "display" | "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false | undefined;
-                videoSource: "display" | "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false | undefined;
+                    videoSource: "display" | "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false | undefined;
-                videoSource: "display" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false | undefined;
+                    videoSource: "display" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false | undefined;
-                videoSource: "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
-        never
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false | undefined;
+                    videoSource: "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
+        undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false | undefined;
-                videoSource: "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false | undefined;
+                    videoSource: "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | false | undefined;
-                videoSource: undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | false | undefined;
+                    videoSource: undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
@@ -256,78 +322,99 @@ expectTrue<
 // #region control: true | undefined
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | undefined;
-                videoSource: "display";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | undefined;
+                    videoSource: "display";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string>
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | undefined;
-                videoSource: "display" | "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | undefined;
+                    videoSource: "display" | "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | undefined;
-                videoSource: "display" | "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | undefined;
+                    videoSource: "display" | "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | undefined;
-                videoSource: "display" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | undefined;
+                    videoSource: "display" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string>
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | undefined;
-                videoSource: "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
-        never
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | undefined;
+                    videoSource: "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
+        undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | undefined;
-                videoSource: "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | undefined;
+                    videoSource: "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: true | undefined;
-                videoSource: undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: true | undefined;
+                    videoSource: undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string>
     >
 >();
@@ -336,79 +423,100 @@ expectTrue<
 // #region control: false
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false;
-                videoSource: "display";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
-        never
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false;
+                    videoSource: "display";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
+        undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false;
-                videoSource: "display" | "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
-        never
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false;
+                    videoSource: "display" | "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
+        undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false;
-                videoSource: "display" | "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
-        never
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false;
+                    videoSource: "display" | "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
+        undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false;
-                videoSource: "display" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
-        never
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false;
+                    videoSource: "display" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
+        undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false;
-                videoSource: "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
-        never
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false;
+                    videoSource: "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
+        undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false;
-                videoSource: "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
-        never
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false;
+                    videoSource: "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
+        undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false;
-                videoSource: undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
-        never
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false;
+                    videoSource: undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
+        undefined
     >
 >();
 // #endregion
@@ -416,78 +524,99 @@ expectTrue<
 // #region control: false | undefined
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false | undefined;
-                videoSource: "display";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false | undefined;
+                    videoSource: "display";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false | undefined;
-                videoSource: "display" | "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false | undefined;
+                    videoSource: "display" | "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false | undefined;
-                videoSource: "display" | "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false | undefined;
+                    videoSource: "display" | "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false | undefined;
-                videoSource: "display" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false | undefined;
+                    videoSource: "display" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false | undefined;
-                videoSource: "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
-        never
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false | undefined;
+                    videoSource: "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
+        undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false | undefined;
-                videoSource: "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false | undefined;
+                    videoSource: "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: false | undefined;
-                videoSource: undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: false | undefined;
+                    videoSource: undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
@@ -496,78 +625,99 @@ expectTrue<
 // #region control: undefined
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: undefined;
-                videoSource: "display";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: undefined;
+                    videoSource: "display";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string>
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: undefined;
-                videoSource: "display" | "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: undefined;
+                    videoSource: "display" | "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: undefined;
-                videoSource: "display" | "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: undefined;
+                    videoSource: "display" | "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: undefined;
-                videoSource: "display" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: undefined;
+                    videoSource: "display" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string>
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: undefined;
-                videoSource: "camera";
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
-        never
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: undefined;
+                    videoSource: "camera";
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
+        undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: undefined;
-                videoSource: "camera" | undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: undefined;
+                    videoSource: "camera" | undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string> | undefined
     >
 >();
 expectTrue<
     Equal<
-        ReturnType<
-            ScrcpyOptions2_2<{
-                control: undefined;
-                videoSource: undefined;
-            }>["createDeviceMessageParser"]
-        >["clipboard"],
+        PropertyOrUndefined<
+            ReturnType<
+                ScrcpyOptions2_2<{
+                    control: undefined;
+                    videoSource: undefined;
+                }>["createDeviceMessageParser"]
+            >,
+            "clipboard"
+        >,
         ReadableStream<string>
     >
 >();

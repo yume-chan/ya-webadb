@@ -6,8 +6,8 @@ import type {
     ScrcpyAudioStreamErroredMetadata,
     ScrcpyAudioStreamPacket,
     ScrcpyAudioStreamSuccessMetadata,
-    ScrcpyDisplay,
     ScrcpyDeviceMessageParser,
+    ScrcpyDisplay,
     ScrcpyEncoder,
     ScrcpyOptions1_15,
 } from "@yume-chan/scrcpy";
@@ -69,7 +69,9 @@ export class AdbScrcpyExitedError extends Error {
     }
 }
 
-interface AdbScrcpyClientInit<TOptions extends AdbScrcpyOptions<object>> {
+interface AdbScrcpyClientInit<
+    TOptions extends AdbScrcpyOptions<Pick<ScrcpyOptions1_15.Init, "control">>,
+> {
     options: TOptions;
     process: AdbNoneProtocolProcess;
     output: ReadableStream<string>;
@@ -77,7 +79,8 @@ interface AdbScrcpyClientInit<TOptions extends AdbScrcpyOptions<object>> {
     videoStream: ReadableStream<Uint8Array> | undefined;
     audioStream: ReadableStream<Uint8Array> | undefined;
     controlStream:
-        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>> | undefined;
+        | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
+        | undefined;
 }
 
 export interface AdbScrcpyAudioStreamSuccessMetadata extends Omit<
@@ -92,7 +95,9 @@ export type AdbScrcpyAudioStreamMetadata =
     | ScrcpyAudioStreamErroredMetadata
     | AdbScrcpyAudioStreamSuccessMetadata;
 
-export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
+export class AdbScrcpyClient<
+    TOptions extends AdbScrcpyOptions<Pick<ScrcpyOptions1_15.Init, "control">>,
+> {
     static async pushServer(
         adb: Adb,
         file: ReadableStream<MaybeConsumable<Uint8Array>>,
@@ -106,7 +111,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
 
     static async start<
         TOptions extends AdbScrcpyOptions<
-            Pick<ScrcpyOptions1_15.Init, "tunnelForward">
+            Pick<ScrcpyOptions1_15.Init, "control" | "tunnelForward">
         >,
     >(
         adb: Adb,
@@ -332,7 +337,8 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
             ? this.#createAudioStream(audioStream)
             : undefined;
 
-        if (controlStream) {
+        // v1.15 has `controlStream` even when `options.value.control` is true
+        if (this.options.value.control && controlStream) {
             this.#deviceMessageParser = options.createDeviceMessageParser();
             this.#controller = new ScrcpyControlMessageWriter(
                 controlStream.writable.getWriter(),

@@ -14,11 +14,18 @@ type Equal<X, Y> =
         ? true
         : false;
 
+type PropertyOrUndefined<T, K extends PropertyKey> = T extends Record<
+    K,
+    infer V
+>
+    ? V
+    : undefined;
+
 function expectTrue<T extends true>(value?: T) { void value; }
 
-expectTrue<Equal<ReturnType<ScrcpyOptions2_6<{control:true}>["createDeviceMessageParser"]>["uHidOutput"], ScrcpyUHidOutputStream>>();
-expectTrue<Equal<ReturnType<ScrcpyOptions2_6<{control:false}>["createDeviceMessageParser"]>["uHidOutput"], never>>();
-expectTrue<Equal<ReturnType<ScrcpyOptions2_6<{control:boolean}>["createDeviceMessageParser"]>["uHidOutput"], ScrcpyUHidOutputStream | undefined>>();
+expectTrue<Equal<PropertyOrUndefined<ReturnType<ScrcpyOptions2_6<{control:true}>["createDeviceMessageParser"]>, "uHidOutput">, ScrcpyUHidOutputStream>>();
+expectTrue<Equal<PropertyOrUndefined<ReturnType<ScrcpyOptions2_6<{control:false}>["createDeviceMessageParser"]>, "uHidOutput">, undefined>>();
+expectTrue<Equal<PropertyOrUndefined<ReturnType<ScrcpyOptions2_6<{control:boolean}>["createDeviceMessageParser"]>, "uHidOutput">, ScrcpyUHidOutputStream | undefined>>();
 
 `;
 

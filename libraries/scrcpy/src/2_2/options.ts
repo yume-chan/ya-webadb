@@ -22,7 +22,6 @@ import type {
 
 import type { ComputeOptionTypes, Init } from "./impl/index.js";
 import {
-    ScrcpyDeviceMessageParser1_21,
     computeOptionValues,
     ControlMessageTypes,
     createMediaStreamTransformer,
@@ -36,6 +35,7 @@ import {
     parseVideoCodecOption,
     parseVideoStreamMetadata,
     parseVideoStreamMetadataAsync,
+    ScrcpyDeviceMessageParser1_21,
     serialize,
     serializeBackOrScreenOnControlMessage,
     serializeInjectTouchControlMessage,
@@ -65,7 +65,7 @@ export class ScrcpyOptions2_2<TInit extends Init = Init>
     createDeviceMessageParser(): MapBoolean<
         ScrcpyOptions2_2.Value<TInit>["control"],
         ScrcpyDeviceMessageParser1_21<ScrcpyOptions2_2.Value<TInit>>,
-        never
+        undefined
     > {
         return new ScrcpyDeviceMessageParser1_21<ScrcpyOptions2_2.Value<TInit>>(
             this.value.clipboardAutosync,

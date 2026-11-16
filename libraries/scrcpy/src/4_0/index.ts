@@ -55,12 +55,12 @@ import {
 
 export class ScrcpyOptions4_0<TInit extends Init = Init>
     implements
-        ScrcpyOptions<ComputeOptionTypes<TInit, typeof Defaults>>,
+        ScrcpyOptions<ScrcpyOptions4_0.Value<TInit>>,
         ScrcpyOptionsListEncoders
 {
     static readonly Defaults = Defaults;
 
-    readonly value: ComputeOptionTypes<TInit, typeof Defaults>;
+    readonly value: ScrcpyOptions4_0.Value<TInit>;
 
     get controlMessageTypes(): typeof ControlMessageTypes {
         return ControlMessageTypes;
@@ -71,15 +71,14 @@ export class ScrcpyOptions4_0<TInit extends Init = Init>
     }
 
     createDeviceMessageParser(): MapBoolean<
-        ComputeOptionTypes<TInit, typeof Defaults>["control"],
-        ScrcpyDeviceMessageParser2_4<
-            ComputeOptionTypes<TInit, typeof Defaults>
-        >,
-        never
+        ScrcpyOptions4_0.Value<TInit>["control"],
+        ScrcpyDeviceMessageParser2_4<ScrcpyOptions4_0.Value<TInit>>,
+        undefined
     > {
-        return new ScrcpyDeviceMessageParser2_4<
-            ComputeOptionTypes<TInit, typeof Defaults>
-        >(this.value.clipboardAutosync, this.value.control) as never;
+        return new ScrcpyDeviceMessageParser2_4<ScrcpyOptions4_0.Value<TInit>>(
+            this.value.clipboardAutosync,
+            this.value.control,
+        ) as never;
     }
 
     serialize(): string[] {
@@ -191,10 +190,14 @@ export class ScrcpyOptions4_0<TInit extends Init = Init>
     createUHidManager(
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
         deviceMessageParser: ScrcpyDeviceMessageParser2_4<
-            ComputeOptionTypes<TInit, typeof Defaults>
+            ScrcpyOptions4_0.Value<TInit>
         >,
-    ) {
-        return new UHidManager(writer, this, deviceMessageParser);
+    ): MapBoolean<
+        ScrcpyOptions4_0.Value<TInit>["control"],
+        UHidManager<ScrcpyOptions4_0.Value<TInit>>,
+        undefined
+    > {
+        return new UHidManager(writer, this, deviceMessageParser) as never;
     }
 }
 

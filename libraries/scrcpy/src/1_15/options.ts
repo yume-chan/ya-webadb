@@ -53,7 +53,11 @@ export class ScrcpyOptions1_15<
     createDeviceMessageParser(): MapBoolean<
         ScrcpyOptions1_15.Value<TInit>["control"],
         ScrcpyDeviceMessageParser1_15<ScrcpyOptions1_15.Value<TInit>>,
-        never
+        // Actually `createDeviceMessageParser` throws (returns `never`) when `control` is false,
+        // but when `control` is `boolean`, `ScrcpyDeviceMessageParser1_15 | never` collapses to
+        // just `ScrcpyDeviceMessageParser1_15`, so it's harder to notice.
+        // `undefined` is used instead to avoid that.
+        undefined
     > {
         return new ScrcpyDeviceMessageParser1_15<
             ScrcpyOptions1_15.Value<TInit>

@@ -60,7 +60,7 @@ export class ScrcpyOptions1_17<TInit extends Init = Init>
     createDeviceMessageParser(): MapBoolean<
         ScrcpyOptions1_17.Value<TInit>["control"],
         ScrcpyDeviceMessageParser1_15<ScrcpyOptions1_17.Value<TInit>>,
-        never
+        undefined
     > {
         return new ScrcpyDeviceMessageParser1_15<
             ScrcpyOptions1_17.Value<TInit>
