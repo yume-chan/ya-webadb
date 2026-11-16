@@ -3,7 +3,7 @@ import { PushReadableStream, tryClose } from "@yume-chan/stream-extra";
 import type { AsyncExactReadable, StructValue } from "@yume-chan/struct";
 import { buffer, struct, u16 } from "@yume-chan/struct";
 
-import type { ScrcpyDeviceMessageParser } from "../../base/index.js";
+import type { ScrcpyDeviceMessageHandler } from "../../base/index.js";
 
 export const UHidOutputDeviceMessage = struct(
     {
@@ -17,15 +17,13 @@ export type UHidOutputDeviceMessage = StructValue<
     typeof UHidOutputDeviceMessage
 >;
 
-export class UHidOutputStream implements ScrcpyDeviceMessageParser {
+export class UHidOutputStream implements ScrcpyDeviceMessageHandler {
     #controllers = new Map<
         number,
         PushReadableStreamController<UHidOutputDeviceMessage>
     >();
 
-    readonly id = 2;
-
-    async parse(_id: number, stream: AsyncExactReadable): Promise<undefined> {
+    async parse(stream: AsyncExactReadable): Promise<undefined> {
         const message = await UHidOutputDeviceMessage.deserialize(stream);
         const id = message.id;
 

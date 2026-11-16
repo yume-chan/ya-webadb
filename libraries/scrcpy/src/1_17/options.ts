@@ -11,7 +11,6 @@ import type {
     ScrcpyVideoStream,
     ScrcpyVideoStreamPacket,
 } from "../base/index.js";
-import { ScrcpyDeviceMessageParsers } from "../base/index.js";
 import type {
     ScrcpyBackOrScreenOnControlMessage,
     ScrcpyInjectTouchControlMessage,
@@ -21,7 +20,6 @@ import type {
 
 import type { ComputeOptionTypes, Init } from "./impl/index.js";
 import {
-    ClipboardStream,
     computeOptionValues,
     ControlMessageTypes,
     createMediaStreamTransformer,
@@ -31,6 +29,7 @@ import {
     parseDisplay,
     parseEncoder,
     parseVideoStreamMetadata,
+    ScrcpyDeviceMessageParser1_15,
     serialize,
     serializeBackOrScreenOnControlMessage,
     serializeInjectTouchControlMessage,
@@ -54,28 +53,18 @@ export class ScrcpyOptions1_17<TInit extends Init = Init>
         return ControlMessageTypes;
     }
 
-    #clipboard: ClipboardStream | undefined;
-    get clipboard(): MapBoolean<
-        this["value"]["control"],
-        ReadableStream<string>,
-        undefined
-    > {
-        return this.#clipboard as never;
-    }
-
-    #deviceMessageParsers = new ScrcpyDeviceMessageParsers();
-    get deviceMessageParsers() {
-        return this.#deviceMessageParsers;
-    }
-
     constructor(init: TInit) {
         this.value = computeOptionValues(init, Defaults);
+    }
 
-        if (this.value.control) {
-            this.#clipboard = this.#deviceMessageParsers.add(
-                new ClipboardStream(),
-            );
-        }
+    createDeviceMessageParser(): MapBoolean<
+        ScrcpyOptions1_17.Value<TInit>["control"],
+        ScrcpyDeviceMessageParser1_15<ScrcpyOptions1_17.Value<TInit>>,
+        never
+    > {
+        return new ScrcpyDeviceMessageParser1_15<
+            ScrcpyOptions1_17.Value<TInit>
+        >(true, this.value.control) as never;
     }
 
     serialize(): string[] {

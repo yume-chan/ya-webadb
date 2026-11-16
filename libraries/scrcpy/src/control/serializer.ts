@@ -1,5 +1,9 @@
 import type { AndroidKeyEventAction } from "../android/index.js";
-import type { ScrcpyOptions, ScrcpyScrollController } from "../base/index.js";
+import type {
+    ScrcpyDeviceMessageParser,
+    ScrcpyOptions,
+    ScrcpyScrollController,
+} from "../base/index.js";
 import { ScrcpyControlMessageType } from "../base/index.js";
 import type {
     ScrcpyInjectScrollControlMessage,
@@ -26,9 +30,14 @@ export class ScrcpyControlMessageSerializer {
     }
 
     #scrollController: ScrcpyScrollController;
+    #deviceMessageParser: ScrcpyDeviceMessageParser;
 
-    constructor(options: ScrcpyOptions<object>) {
+    constructor(
+        options: ScrcpyOptions<object>,
+        deviceMessageParser: ScrcpyDeviceMessageParser,
+    ) {
         this.#options = options;
+        this.#deviceMessageParser = deviceMessageParser;
         this.#scrollController = options.createScrollController();
     }
 
@@ -124,10 +133,13 @@ export class ScrcpyControlMessageSerializer {
     }
 
     setClipboard(message: Omit<ScrcpySetClipboardControlMessage, "type">) {
-        return this.#options.serializeSetClipboardControlMessage({
-            ...message,
-            type: this.getType(ScrcpyControlMessageType.SetClipboard),
-        });
+        return this.#options.serializeSetClipboardControlMessage(
+            {
+                ...message,
+                type: this.getType(ScrcpyControlMessageType.SetClipboard),
+            },
+            this.#deviceMessageParser,
+        );
     }
 
     uHidCreate(message: Omit<ScrcpyUHidCreateControlMessage, "type">) {

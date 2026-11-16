@@ -2,7 +2,8 @@ import { PromiseResolver } from "@yume-chan/async";
 import type { AsyncExactReadable, StructInit } from "@yume-chan/struct";
 import { string, struct, u32, u64, u8 } from "@yume-chan/struct";
 
-import type { ScrcpyDeviceMessageParser } from "../../base/index.js";
+import type { ScrcpyDeviceMessageClipboardAckHandler } from "../../base/device-message.js";
+import type { ScrcpyDeviceMessageHandler } from "../../base/index.js";
 import type { ScrcpySetClipboardControlMessage } from "../../latest.js";
 
 export const AckClipboardDeviceMessage = struct(
@@ -25,14 +26,16 @@ export type SetClipboardControlMessage = StructInit<
     typeof SetClipboardControlMessage
 >;
 
-export class AckClipboardHandler implements ScrcpyDeviceMessageParser {
+export class AckClipboardHandler
+    implements
+        ScrcpyDeviceMessageHandler,
+        ScrcpyDeviceMessageClipboardAckHandler
+{
     #resolvers = new Map<bigint, PromiseResolver<void>>();
 
     #closed = false;
 
-    readonly id = 1;
-
-    async parse(_id: number, stream: AsyncExactReadable): Promise<undefined> {
+    async parse(stream: AsyncExactReadable): Promise<undefined> {
         const message = await AckClipboardDeviceMessage.deserialize(stream);
         const resolver = this.#resolvers.get(message.sequence);
         if (resolver) {
@@ -81,11 +84,11 @@ export class AckClipboardHandler implements ScrcpyDeviceMessageParser {
 
 export function serializeSetClipboardControlMessage(
     message: ScrcpySetClipboardControlMessage,
-    ackHandler: AckClipboardHandler | undefined,
+    ackHandler: ScrcpyDeviceMessageClipboardAckHandler | undefined,
 ): Uint8Array | [Uint8Array, Promise<void>] {
     if (!ackHandler) {
         throw new Error(
-            "`serializeSetClipboardControlMessage` requires `control: true` option",
+            "`ScrcpyDeviceMessageParser` does not support clipboard acknowledgments",
         );
     }
 

@@ -1,6 +1,7 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
 
+import type { ScrcpyDeviceMessageParser } from "../base/device-message.js";
 import type {
     MapBoolean,
     ScrcpyDisplay,
@@ -11,7 +12,6 @@ import type {
     ScrcpyVideoStream,
     ScrcpyVideoStreamPacket,
 } from "../base/index.js";
-import { ScrcpyDeviceMessageParsers } from "../base/index.js";
 import type {
     ScrcpyBackOrScreenOnControlMessage,
     ScrcpyInjectTouchControlMessage,
@@ -21,8 +21,7 @@ import type {
 
 import type { ComputeOptionTypes, Init } from "./impl/index.js";
 import {
-    AckClipboardHandler,
-    ClipboardStream,
+    ScrcpyDeviceMessageParser1_21,
     computeOptionValues,
     ControlMessageTypes,
     createMediaStreamTransformer,
@@ -54,36 +53,18 @@ export class ScrcpyOptions1_25<TInit extends Init = Init>
         return ControlMessageTypes;
     }
 
-    #clipboard: ClipboardStream | undefined;
-    get clipboard(): MapBoolean<
-        this["value"]["clipboardAutosync"],
-        ReadableStream<string>,
-        undefined
-    > {
-        return this.#clipboard as never;
-    }
-
-    #ackClipboardHandler: AckClipboardHandler | undefined;
-
-    #deviceMessageParsers = new ScrcpyDeviceMessageParsers();
-    get deviceMessageParsers() {
-        return this.#deviceMessageParsers;
-    }
-
     constructor(init: TInit) {
         this.value = computeOptionValues(init, Defaults);
+    }
 
-        if (this.value.control) {
-            if (this.value.clipboardAutosync) {
-                this.#clipboard = this.#deviceMessageParsers.add(
-                    new ClipboardStream(),
-                );
-            }
-
-            this.#ackClipboardHandler = this.#deviceMessageParsers.add(
-                new AckClipboardHandler(),
-            );
-        }
+    createDeviceMessageParser(): MapBoolean<
+        ScrcpyOptions1_25.Value<TInit>["control"],
+        ScrcpyDeviceMessageParser1_21<ScrcpyOptions1_25.Value<TInit>>,
+        never
+    > {
+        return new ScrcpyDeviceMessageParser1_21<
+            ScrcpyOptions1_25.Value<TInit>
+        >(this.value.clipboardAutosync, this.value.control) as never;
     }
 
     serialize(): string[] {
@@ -139,13 +120,14 @@ export class ScrcpyOptions1_25<TInit extends Init = Init>
 
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
+        deviceMessageParser: ScrcpyDeviceMessageParser,
     ): Uint8Array | [Uint8Array, Promise<void>] {
         if (!this.value.control) {
             throw new Error("control is disabled");
         }
         return serializeSetClipboardControlMessage(
             message,
-            this.#ackClipboardHandler,
+            deviceMessageParser.ackClipboardHandler,
         );
     }
 

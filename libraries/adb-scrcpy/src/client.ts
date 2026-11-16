@@ -7,6 +7,7 @@ import type {
     ScrcpyAudioStreamPacket,
     ScrcpyAudioStreamSuccessMetadata,
     ScrcpyDisplay,
+    ScrcpyDeviceMessageParser,
     ScrcpyEncoder,
     ScrcpyOptions1_15,
 } from "@yume-chan/scrcpy";
@@ -227,6 +228,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
     }
 
     #options: TOptions;
+    #deviceMessageParser: ScrcpyDeviceMessageParser | undefined;
     get options() {
         return this.#options;
     }
@@ -298,8 +300,16 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
         return this.#controller as never;
     }
 
-    get clipboard(): TOptions["clipboard"] {
-        return this.#options.clipboard;
+    get deviceMessageParser() {
+        return this.#deviceMessageParser as ReturnType<
+            TOptions["createDeviceMessageParser"]
+        >;
+    }
+
+    get clipboard(): ReturnType<
+        TOptions["createDeviceMessageParser"]
+    >["clipboard"] {
+        return this.#deviceMessageParser?.clipboard;
     }
 
     constructor({
@@ -323,9 +333,11 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
             : undefined;
 
         if (controlStream) {
+            this.#deviceMessageParser = options.createDeviceMessageParser();
             this.#controller = new ScrcpyControlMessageWriter(
                 controlStream.writable.getWriter(),
                 options,
+                this.#deviceMessageParser,
             );
 
             this.#parseDeviceMessages(controlStream.readable).catch(() => {});
@@ -342,17 +354,17 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
                     id = result[0]!;
                 } catch (e) {
                     if (e instanceof ExactReadableEndedError) {
-                        this.#options.deviceMessageParsers.close();
+                        this.#deviceMessageParser!.close();
                         break;
                     }
 
                     throw e;
                 }
 
-                await this.#options.deviceMessageParsers.parse(id, buffered);
+                await this.#deviceMessageParser!.parse(id, buffered);
             }
         } catch (e) {
-            this.#options.deviceMessageParsers.error(e);
+            this.#deviceMessageParser!.error(e);
             await tryCancel(buffered);
         }
     }

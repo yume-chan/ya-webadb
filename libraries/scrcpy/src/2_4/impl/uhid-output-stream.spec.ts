@@ -15,18 +15,13 @@ function createMessage(id: number, data: Uint8Array) {
 }
 
 describe("UHidOutputStream", () => {
-    it("should construct", () => {
-        const stream = new UHidOutputStream();
-        assert.strictEqual(stream.id, 2);
-    });
-
     it("should route output messages to the matching device", async () => {
         const stream = new UHidOutputStream();
         const device1 = stream.addDevice(1).getReader();
         const device2 = stream.addDevice(2).getReader();
 
-        await stream.parse(0, createMessage(2, new Uint8Array([3, 4])));
-        await stream.parse(0, createMessage(1, new Uint8Array([1, 2])));
+        await stream.parse(createMessage(2, new Uint8Array([3, 4])));
+        await stream.parse(createMessage(1, new Uint8Array([1, 2])));
 
         assert.deepStrictEqual(await device1.read(), {
             done: false,
@@ -44,7 +39,7 @@ describe("UHidOutputStream", () => {
 
         assert.throws(() => stream.addDevice(1), /Device ID already exists: 1/);
         await assert.rejects(
-            stream.parse(0, createMessage(2, new Uint8Array())),
+            stream.parse(createMessage(2, new Uint8Array())),
             /Unregistered device ID: 2/,
         );
         assert.throws(

@@ -7,12 +7,11 @@ import type {
     ScrcpySetClipboardControlMessage,
     ScrcpySetDisplayPowerControlMessage,
     ScrcpyUHidCreateControlMessage,
-    ScrcpyUHidOutputStream,
 } from "../latest.js";
 
 import type { ScrcpyAudioStreamMetadata } from "./audio.js";
 import type { ScrcpyControlMessageType } from "./control-message-type.js";
-import type { ScrcpyDeviceMessageParsers } from "./device-message.js";
+import type { ScrcpyDeviceMessageParser } from "./device-message.js";
 import type { ScrcpyDisplay } from "./display.js";
 import type { ScrcpyEncoder } from "./encoder.js";
 import type { ScrcpyVideoStreamPacket } from "./media.js";
@@ -34,11 +33,7 @@ export interface ScrcpyOptions<T extends object> {
 
     value: T;
 
-    readonly clipboard?: ReadableStream<string> | undefined;
-
-    readonly uHidOutput?: ScrcpyUHidOutputStream | undefined;
-
-    readonly deviceMessageParsers: ScrcpyDeviceMessageParsers;
+    createDeviceMessageParser(): ScrcpyDeviceMessageParser;
 
     serialize(): string[];
 
@@ -69,6 +64,7 @@ export interface ScrcpyOptions<T extends object> {
 
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
+        deviceMessageParser: ScrcpyDeviceMessageParser,
     ): Uint8Array | [Uint8Array, Promise<void>];
 
     serializeSetDisplayPowerControlMessage(

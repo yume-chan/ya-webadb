@@ -1,4 +1,5 @@
 export * from "../../1_18/impl/index.js";
+export * from "./device-message-parser.js";
 
 export {
     computeOptionValues,

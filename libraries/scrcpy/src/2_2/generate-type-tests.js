@@ -55,7 +55,7 @@ function* powerSetExceptEmpty(values) {
  */
 function generateCase(control, videoSource, expectedType) {
     return `
-expectTrue<Equal<ScrcpyOptions2_2<{control:${control.join("|")}, videoSource:${videoSource.join("|")}}>["clipboard"], ${expectedType}>>();
+expectTrue<Equal<ReturnType<ScrcpyOptions2_2<{control:${control.join("|")}, videoSource:${videoSource.join("|")}}>["createDeviceMessageParser"]>["clipboard"], ${expectedType}>>();
     `.trim();
 }
 
@@ -63,24 +63,20 @@ for (const control of powerSetExceptEmpty(controlValues)) {
     content += `\n// #region control: ${control.join(" | ")}\n`;
 
     for (const videoSource of powerSetExceptEmpty(videoSourceValues)) {
-        const willDisableControl =
-            videoSource.length === 1 && videoSource[0] === `"camera"`;
-        if (willDisableControl) {
-            content += generateCase(control, videoSource, "undefined");
+        const controlDefinitelyDisabled =
+            (control.length === 1 && control[0] === "false") ||
+            (videoSource.length === 1 && videoSource[0] === `"camera"`);
+        if (controlDefinitelyDisabled) {
+            content += generateCase(control, videoSource, "never");
             continue;
         }
-
-        const controlDefinitelyDisabled =
-            control.length === 1 && control[0] === "false";
 
         const mayDisableControl = videoSource.includes(`"camera"`);
         if (mayDisableControl) {
             content += generateCase(
                 control,
                 videoSource,
-                controlDefinitelyDisabled
-                    ? "undefined"
-                    : "ReadableStream<string> | undefined",
+                "ReadableStream<string> | undefined",
             );
             continue;
         }
@@ -90,11 +86,9 @@ for (const control of powerSetExceptEmpty(controlValues)) {
         content += generateCase(
             control,
             videoSource,
-            controlDefinitelyDisabled
-                ? "undefined"
-                : controlMaybeDisabled
-                  ? "ReadableStream<string> | undefined"
-                  : "ReadableStream<string>",
+            controlMaybeDisabled
+                ? "ReadableStream<string> | undefined"
+                : "ReadableStream<string>",
         );
     }
 

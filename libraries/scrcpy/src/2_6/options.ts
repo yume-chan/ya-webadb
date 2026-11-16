@@ -6,6 +6,7 @@ import type {
     WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 
+import type { ScrcpyDeviceMessageParser } from "../base/device-message.js";
 import type {
     MapBoolean,
     ScrcpyAudioStreamMetadata,
@@ -17,7 +18,6 @@ import type {
     ScrcpyVideoStream,
     ScrcpyVideoStreamPacket,
 } from "../base/index.js";
-import { ScrcpyDeviceMessageParsers } from "../base/index.js";
 import type {
     ScrcpyBackOrScreenOnControlMessage,
     ScrcpyInjectTouchControlMessage,
@@ -28,8 +28,6 @@ import type {
 
 import type { ComputeOptionTypes, Init } from "./impl/index.js";
 import {
-    AckClipboardHandler,
-    ClipboardStream,
     computeOptionValues,
     ControlMessageTypes,
     createMediaStreamTransformer,
@@ -43,6 +41,7 @@ import {
     parseVideoCodecOption,
     parseVideoStreamMetadata,
     parseVideoStreamMetadataAsync,
+    ScrcpyDeviceMessageParser2_4,
     serialize,
     serializeBackOrScreenOnControlMessage,
     serializeInjectTouchControlMessage,
@@ -52,7 +51,6 @@ import {
     setListDisplays,
     setListEncoders,
     UHidManager,
-    UHidOutputStream,
 } from "./impl/index.js";
 
 export class ScrcpyOptions2_6<TInit extends Init = Init>
@@ -68,49 +66,19 @@ export class ScrcpyOptions2_6<TInit extends Init = Init>
         return ControlMessageTypes;
     }
 
-    #clipboard: ClipboardStream | undefined;
-    get clipboard(): MapBoolean<
-        this["value"]["clipboardAutosync"],
-        ReadableStream<string>,
-        undefined
-    > {
-        return this.#clipboard as never;
-    }
-
-    #ackClipboardHandler: AckClipboardHandler | undefined;
-
-    #uHidOutput: UHidOutputStream | undefined;
-    get uHidOutput(): MapBoolean<
-        this["value"]["control"],
-        UHidOutputStream,
-        undefined
-    > {
-        return this.#uHidOutput as never;
-    }
-
-    #deviceMessageParsers = new ScrcpyDeviceMessageParsers();
-    get deviceMessageParsers() {
-        return this.#deviceMessageParsers;
-    }
-
     constructor(init: TInit) {
         this.value = computeOptionValues(init, Defaults);
+    }
 
-        if (this.value.control) {
-            if (this.value.clipboardAutosync) {
-                this.#clipboard = this.#deviceMessageParsers.add(
-                    new ClipboardStream(),
-                );
-            }
-
-            this.#ackClipboardHandler = this.#deviceMessageParsers.add(
-                new AckClipboardHandler(),
-            );
-
-            this.#uHidOutput = this.#deviceMessageParsers.add(
-                new UHidOutputStream(),
-            );
-        }
+    createDeviceMessageParser(): MapBoolean<
+        ScrcpyOptions2_6.Value<TInit>["control"],
+        ScrcpyDeviceMessageParser2_4<ScrcpyOptions2_6.Value<TInit>>,
+        never
+    > {
+        return new ScrcpyDeviceMessageParser2_4<ScrcpyOptions2_6.Value<TInit>>(
+            this.value.clipboardAutosync,
+            this.value.control,
+        ) as never;
     }
 
     serialize(): string[] {
@@ -183,13 +151,14 @@ export class ScrcpyOptions2_6<TInit extends Init = Init>
 
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
+        deviceMessageParser: ScrcpyDeviceMessageParser,
     ): Uint8Array | [Uint8Array, Promise<void>] {
         if (!this.value.control) {
             throw new Error("control is disabled");
         }
         return serializeSetClipboardControlMessage(
             message,
-            this.#ackClipboardHandler,
+            deviceMessageParser.ackClipboardHandler,
         );
     }
 
@@ -220,8 +189,11 @@ export class ScrcpyOptions2_6<TInit extends Init = Init>
 
     createUHidManager(
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
+        deviceMessageParser: ScrcpyDeviceMessageParser2_4<
+            ScrcpyOptions2_6.Value<TInit>
+        >,
     ) {
-        return new UHidManager(writer, this, serializeUHidCreateControlMessage);
+        return new UHidManager(writer, this, deviceMessageParser);
     }
 }
 
