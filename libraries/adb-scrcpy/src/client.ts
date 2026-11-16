@@ -95,6 +95,9 @@ export type AdbScrcpyAudioStreamMetadata =
     | ScrcpyAudioStreamErroredMetadata
     | AdbScrcpyAudioStreamSuccessMetadata;
 
+type PropertyOrUndefined<T, K extends PropertyKey> =
+    T extends Record<K, infer V> ? V : undefined;
+
 export class AdbScrcpyClient<
     TOptions extends AdbScrcpyOptions<Pick<ScrcpyOptions1_15.Init, "control">>,
 > {
@@ -305,16 +308,17 @@ export class AdbScrcpyClient<
         return this.#controller as never;
     }
 
-    get deviceMessageParser() {
-        return this.#deviceMessageParser as ReturnType<
-            TOptions["createDeviceMessageParser"]
-        >;
+    get deviceMessageParser(): ReturnType<
+        TOptions["createDeviceMessageParser"]
+    > {
+        return this.#deviceMessageParser as never;
     }
 
-    get clipboard(): ReturnType<
-        TOptions["createDeviceMessageParser"]
-    >["clipboard"] {
-        return this.#deviceMessageParser?.clipboard;
+    get clipboard(): PropertyOrUndefined<
+        ReturnType<TOptions["createDeviceMessageParser"]>,
+        "clipboard"
+    > {
+        return this.#deviceMessageParser?.clipboard as never;
     }
 
     constructor({
@@ -343,7 +347,7 @@ export class AdbScrcpyClient<
             this.#controller = new ScrcpyControlMessageWriter(
                 controlStream.writable.getWriter(),
                 options,
-                this.#deviceMessageParser,
+                this.#deviceMessageParser!,
             );
 
             this.#parseDeviceMessages(controlStream.readable).catch(() => {});
