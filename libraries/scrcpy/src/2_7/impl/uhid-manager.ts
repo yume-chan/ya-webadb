@@ -10,12 +10,13 @@ import {
     ScrcpyUHidDestroyControlMessage,
     ScrcpyUHidInputControlMessage,
 } from "../../control/uhid.js";
+import type { ScrcpyOptions2_7 } from "../../index.js";
 import { ScrcpyControlMessageType } from "../../index.js";
 import type { ScrcpyUHidOutputDeviceMessage } from "../../latest.js";
 
 import { serializeUHidCreateControlMessage } from "./serialize-uhid-create.js";
 
-export class UHidManager<T extends object> {
+export class UHidManager<T extends Pick<ScrcpyOptions2_7.Init, "control">> {
     #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
     #options: ScrcpyOptions<T>;
     #deviceMessageParser: ScrcpyDeviceMessageParser2_4<T>;
@@ -28,6 +29,10 @@ export class UHidManager<T extends object> {
         options: ScrcpyOptions<T>,
         deviceMessageParser: ScrcpyDeviceMessageParser2_4<T>,
     ) {
+        if (!options.value.control) {
+            throw new Error("control is disabled");
+        }
+
         this.#writer = writer;
         this.#options = options;
         this.#deviceMessageParser = deviceMessageParser;
@@ -111,6 +116,7 @@ export class UHidDevice<T extends object> {
         return this.#name;
     }
 
+    #destroyPromise: Promise<void> | undefined;
     #destroyed = false;
     get destroyed() {
         return this.#destroyed;
@@ -142,7 +148,7 @@ export class UHidDevice<T extends object> {
     }
 
     async sendReport(report: Uint8Array) {
-        if (this.#destroyed) {
+        if (this.#destroyPromise) {
             throw new Error("Device is destroyed");
         }
 
@@ -156,12 +162,7 @@ export class UHidDevice<T extends object> {
         await Consumable.WritableStream.write(this.#writer, message);
     }
 
-    async destroy() {
-        if (this.#destroyed) {
-            return;
-        }
-        this.#destroyed = true;
-
+    async #destroy() {
         const message = ScrcpyUHidDestroyControlMessage.serialize({
             id: this.#id,
             type: this.#options.controlMessageTypes[
@@ -171,5 +172,17 @@ export class UHidDevice<T extends object> {
         await Consumable.WritableStream.write(this.#writer, message);
 
         this.#onDestroy?.();
+        this.#destroyed = true;
+    }
+
+    async destroy() {
+        if (this.#destroyPromise) {
+            return this.#destroyPromise;
+        }
+        this.#destroyPromise = this.#destroy().catch((e) => {
+            this.#destroyPromise = undefined;
+            throw e;
+        });
+        return this.#destroyPromise;
     }
 }
