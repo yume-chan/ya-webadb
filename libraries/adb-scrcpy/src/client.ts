@@ -80,8 +80,7 @@ interface AdbScrcpyClientInit<
     videoStream: ReadableStream<Uint8Array> | undefined;
     audioStream: ReadableStream<Uint8Array> | undefined;
     controlStream:
-        | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
-        | undefined;
+        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>> | undefined;
 }
 
 export interface AdbScrcpyAudioStreamSuccessMetadata extends Omit<
@@ -307,16 +306,14 @@ export class AdbScrcpyClient<
     }
 
     get deviceMessageParser(): TOptions["createDeviceMessageParser"] extends
-        | (() => infer R)
-        | undefined
+        (() => infer R) | undefined
         ? R
         : undefined {
         return this.#deviceMessageParser as never;
     }
 
     get clipboard(): TOptions["createDeviceMessageParser"] extends
-        | (() => infer R extends { clipboard: unknown })
-        | undefined
+        (() => infer R extends { clipboard: unknown }) | undefined
         ? R["clipboard"]
         : undefined {
         return this.#deviceMessageParser?.clipboard as never;

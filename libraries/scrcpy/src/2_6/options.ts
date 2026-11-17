@@ -82,8 +82,7 @@ export class ScrcpyOptions2_6<TInit extends Init = Init>
                       this.value.control,
                   )
             : undefined) satisfies
-            | (() => DeviceMessageParser<this["value"]>)
-            | undefined as never;
+            (() => DeviceMessageParser<this["value"]>) | undefined as never;
     }
 
     serialize(): string[] {
