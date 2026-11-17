@@ -1,5 +1,10 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
-import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
+import type {
+    Consumable,
+    ReadableStream,
+    TransformStream,
+    WritableStreamDefaultWriter,
+} from "@yume-chan/stream-extra";
 
 import type {
     ScrcpyBackOrScreenOnControlMessage,
@@ -16,6 +21,7 @@ import type { ScrcpyDisplay } from "./display.js";
 import type { ScrcpyEncoder } from "./encoder.js";
 import type { ScrcpyVideoStreamPacket } from "./media.js";
 import type { ScrcpyScrollController } from "./scroll-controller.js";
+import type { ScrcpyUHidManager } from "./uhid.js";
 import type { ScrcpyVideoStream } from "./video.js";
 
 export type ScrcpyControlMessageTypeMap = Partial<
@@ -76,6 +82,13 @@ export interface ScrcpyOptions<T extends object> {
     serializeUHidCreateControlMessage?(
         message: ScrcpyUHidCreateControlMessage,
     ): Uint8Array;
+
+    createUHidManager?:
+        | ((
+              writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
+              deviceMessageParser: ScrcpyDeviceMessageParser,
+          ) => ScrcpyUHidManager)
+        | undefined;
 }
 
 export interface ScrcpyOptionsListEncoders {

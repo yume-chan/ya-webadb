@@ -82,7 +82,8 @@ export class ScrcpyOptions4_0<TInit extends Init = Init>
                       this.value.control,
                   )
             : undefined) satisfies
-            (() => DeviceMessageParser<this["value"]>) | undefined as never;
+            | (() => DeviceMessageParser<this["value"]>)
+            | undefined as never;
     }
 
     serialize(): string[] {
@@ -191,15 +192,25 @@ export class ScrcpyOptions4_0<TInit extends Init = Init>
         return serializeUHidCreateControlMessage(message);
     }
 
-    createUHidManager(
-        writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
-        deviceMessageParser: DeviceMessageParser<ScrcpyOptions4_0.Value<TInit>>,
-    ): MapBoolean<
-        ScrcpyOptions4_0.Value<TInit>["control"],
-        UHidManager<ScrcpyOptions4_0.Value<TInit>>,
+    get createUHidManager(): MapBoolean<
+        this["value"]["control"],
+        (
+            writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
+            deviceMessageParser: ScrcpyDeviceMessageParser,
+        ) => UHidManager<this["value"]>,
         undefined
     > {
-        return new UHidManager(writer, this, deviceMessageParser) as never;
+        return (this.value.control
+            ? (
+                  writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
+                  deviceMessageParser: DeviceMessageParser<this["value"]>,
+              ) => new UHidManager(writer, this, deviceMessageParser)
+            : undefined) satisfies
+            | ((
+                  writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
+                  deviceMessageParser: DeviceMessageParser<this["value"]>,
+              ) => UHidManager<this["value"]>)
+            | undefined as never;
     }
 }
 

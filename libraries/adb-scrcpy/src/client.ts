@@ -10,6 +10,7 @@ import type {
     ScrcpyDisplay,
     ScrcpyEncoder,
     ScrcpyOptions1_15,
+    ScrcpyUHidManager,
 } from "@yume-chan/scrcpy";
 import {
     DefaultServerPath,
@@ -79,7 +80,8 @@ interface AdbScrcpyClientInit<
     videoStream: ReadableStream<Uint8Array> | undefined;
     audioStream: ReadableStream<Uint8Array> | undefined;
     controlStream:
-        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>> | undefined;
+        | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
+        | undefined;
 }
 
 export interface AdbScrcpyAudioStreamSuccessMetadata extends Omit<
@@ -305,17 +307,27 @@ export class AdbScrcpyClient<
     }
 
     get deviceMessageParser(): TOptions["createDeviceMessageParser"] extends
-        (() => infer R) | undefined
+        | (() => infer R)
+        | undefined
         ? R
         : undefined {
         return this.#deviceMessageParser as never;
     }
 
     get clipboard(): TOptions["createDeviceMessageParser"] extends
-        (() => infer R extends { clipboard: unknown }) | undefined
+        | (() => infer R extends { clipboard: unknown })
+        | undefined
         ? R["clipboard"]
         : undefined {
         return this.#deviceMessageParser?.clipboard as never;
+    }
+
+    #uHidManager: ScrcpyUHidManager | undefined;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+    get uHidManager(): TOptions["createUHidManager"] extends Function
+        ? ReturnType<TOptions["createUHidManager"]>
+        : undefined {
+        return this.#uHidManager as never;
     }
 
     constructor({
@@ -340,13 +352,18 @@ export class AdbScrcpyClient<
 
         if (options.createDeviceMessageParser && controlStream) {
             this.#deviceMessageParser = options.createDeviceMessageParser();
+            this.#parseDeviceMessages(controlStream.readable).catch(() => {});
+
+            const writer = controlStream.writable.getWriter();
             this.#controller = new ScrcpyControlMessageWriter(
-                controlStream.writable.getWriter(),
+                writer,
                 options,
                 this.#deviceMessageParser,
             );
-
-            this.#parseDeviceMessages(controlStream.readable).catch(() => {});
+            this.#uHidManager = options.createUHidManager?.(
+                writer,
+                this.#deviceMessageParser,
+            );
         }
     }
 

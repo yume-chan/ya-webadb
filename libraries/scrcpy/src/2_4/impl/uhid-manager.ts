@@ -4,16 +4,22 @@ import type {
 } from "@yume-chan/stream-extra";
 import { Consumable } from "@yume-chan/stream-extra";
 
-import type { ScrcpyOptions } from "../../base/index.js";
+import type {
+    ScrcpyOptions,
+    ScrcpyUHidDevice,
+    ScrcpyUHidManager,
+} from "../../base/index.js";
+import { ScrcpyControlMessageType } from "../../base/index.js";
 import { ScrcpyUHidInputControlMessage } from "../../control/uhid.js";
-import type { ScrcpyOptions2_4 } from "../../index.js";
-import { ScrcpyControlMessageType } from "../../index.js";
 import type { ScrcpyUHidOutputDeviceMessage } from "../../latest.js";
+import type { ScrcpyOptions2_4 } from "../options.js";
 
 import type { DeviceMessageParser } from "./device-message-parser.js";
 import { serializeUHidCreateControlMessage } from "./serialize-uhid-create.js";
 
-export class UHidManager<T extends Pick<ScrcpyOptions2_4.Init, "control">> {
+export class UHidManager<
+    T extends Pick<ScrcpyOptions2_4.Init, "control">,
+> implements ScrcpyUHidManager {
     #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
     #options: ScrcpyOptions<T>;
     #deviceMessageParser: DeviceMessageParser<T>;
@@ -37,7 +43,7 @@ export class UHidManager<T extends Pick<ScrcpyOptions2_4.Init, "control">> {
         this.#deviceMessageParser = deviceMessageParser;
     }
 
-    async createDevice(descriptor: Uint8Array) {
+    async createDevice({ descriptor }: { descriptor: Uint8Array }) {
         const id = this.#id;
         this.#id += 1;
 
@@ -61,7 +67,7 @@ export class UHidManager<T extends Pick<ScrcpyOptions2_4.Init, "control">> {
     }
 }
 
-export class UHidDevice<T extends object> {
+export class UHidDevice<T extends object> implements ScrcpyUHidDevice {
     #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
 
     #options: ScrcpyOptions<T>;
@@ -91,7 +97,7 @@ export class UHidDevice<T extends object> {
         this.#output = output;
     }
 
-    async sendReport(report: Uint8Array) {
+    async sendReport(report: Uint8Array): Promise<undefined> {
         const message = ScrcpyUHidInputControlMessage.serialize({
             type: this.#options.controlMessageTypes[
                 ScrcpyControlMessageType.UHidInput

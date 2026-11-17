@@ -4,20 +4,26 @@ import type {
 } from "@yume-chan/stream-extra";
 import { Consumable } from "@yume-chan/stream-extra";
 
-import type { ScrcpyOptions } from "../../base/index.js";
+import type {
+    ScrcpyOptions,
+    ScrcpyUHidDevice,
+    ScrcpyUHidManager,
+} from "../../base/index.js";
+import { ScrcpyControlMessageType } from "../../base/index.js";
 import {
     ScrcpyUHidDestroyControlMessage,
     ScrcpyUHidInputControlMessage,
 } from "../../control/uhid.js";
-import type { ScrcpyOptions3_1 } from "../../index.js";
-import { ScrcpyControlMessageType } from "../../index.js";
 import type { ScrcpyUHidOutputDeviceMessage } from "../../latest.js";
+import type { ScrcpyOptions3_1 } from "../index.js";
 
 import { serializeUHidCreateControlMessage } from "./serialize-uhid-create.js";
 
 import type { DeviceMessageParser } from "./index.js";
 
-export class UHidManager<T extends Pick<ScrcpyOptions3_1.Init, "control">> {
+export class UHidManager<
+    T extends Pick<ScrcpyOptions3_1.Init, "control">,
+> implements ScrcpyUHidManager {
     #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
     #options: ScrcpyOptions<T>;
     #deviceMessageParser: DeviceMessageParser<T>;
@@ -39,12 +45,17 @@ export class UHidManager<T extends Pick<ScrcpyOptions3_1.Init, "control">> {
         this.#deviceMessageParser = deviceMessageParser;
     }
 
-    async createDevice(
-        name: string,
-        vendorId: number,
-        productId: number,
-        descriptor: Uint8Array,
-    ) {
+    async createDevice({
+        name,
+        vendorId,
+        productId,
+        descriptor,
+    }: {
+        name: string;
+        vendorId: number;
+        productId: number;
+        descriptor: Uint8Array;
+    }) {
         let id: number;
         if (this.#sparseIds.size > 0) {
             id = Math.min(...this.#sparseIds);
@@ -94,7 +105,7 @@ export class UHidManager<T extends Pick<ScrcpyOptions3_1.Init, "control">> {
         }
     }
 
-    async close() {
+    async close(): Promise<undefined> {
         for (const device of this.#devices.values()) {
             await device.destroy();
         }
@@ -103,7 +114,7 @@ export class UHidManager<T extends Pick<ScrcpyOptions3_1.Init, "control">> {
     }
 }
 
-export class UHidDevice<T extends object> {
+export class UHidDevice<T extends object> implements ScrcpyUHidDevice {
     #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
 
     #options: ScrcpyOptions<T>;
@@ -136,7 +147,7 @@ export class UHidDevice<T extends object> {
         return this.#productId;
     }
 
-    #destroyPromise: Promise<void> | undefined;
+    #destroyPromise: Promise<undefined> | undefined;
     #destroyed: boolean = false;
     get destroyed() {
         return this.#destroyed;
@@ -171,7 +182,7 @@ export class UHidDevice<T extends object> {
         this.#onDestroy = onDestroy;
     }
 
-    async sendReport(report: Uint8Array) {
+    async sendReport(report: Uint8Array): Promise<undefined> {
         if (this.#destroyed) {
             throw new Error("Device is destroyed");
         }
@@ -186,7 +197,7 @@ export class UHidDevice<T extends object> {
         await Consumable.WritableStream.write(this.#writer, message);
     }
 
-    async #destroy() {
+    async #destroy(): Promise<undefined> {
         const message = ScrcpyUHidDestroyControlMessage.serialize({
             id: this.#id,
             type: this.#options.controlMessageTypes[
@@ -199,7 +210,7 @@ export class UHidDevice<T extends object> {
         this.#destroyed = true;
     }
 
-    async destroy() {
+    async destroy(): Promise<undefined> {
         if (this.#destroyPromise) {
             return this.#destroyPromise;
         }
