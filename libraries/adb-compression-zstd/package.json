@@ -32,7 +32,7 @@
         "test": "run-test"
     },
     "dependencies": {
-        "@structured-world/structured-zstd": "^0.2.6",
+        "@structured-world/structured-zstd": "^0.4.0",
         "@yume-chan/adb": "workspace:*",
         "@yume-chan/stream-extra": "workspace:*",
         "comlink": "^4.4.2"

@@ -37,7 +37,7 @@
         "@yume-chan/adb-server-node-tcp": "workspace:^",
         "@yume-chan/android-bin": "workspace:^",
         "@yume-chan/stream-extra": "workspace:^",
-        "commander": "^15.0.0",
+        "commander": "^15.1.0",
         "source-map-support": "^0.5.21",
         "wtfnode": "^0.10.1"
     },
@@ -46,7 +46,7 @@
         "@types/wtfnode": "^0.10.0",
         "@yume-chan/lint": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.9.10",
+        "prettier": "^3.10.1",
         "typescript": "^6.0.3"
     }
 }

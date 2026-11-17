@@ -129,6 +129,6 @@
         }
     ],
     "markdown.extension.toc.levels": "2..6",
-    "prettier.prettierPath": "./toolchain/eslint-config/node_modules/prettier/index.cjs",
+    "prettier.prettierPath": "toolchain/lint/node_modules/prettier/index.cjs",
     "prettier.tabWidth": 4
 }
