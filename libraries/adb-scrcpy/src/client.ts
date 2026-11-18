@@ -49,6 +49,13 @@ async function* concatIterables<T>(
     }
 }
 
+type MaybeReturnType<T> = T extends (...args: never[]) => infer R
+    ? R
+    : undefined;
+
+type MaybeProperty<T, K extends PropertyKey> =
+    T extends Record<K, infer R> ? R : undefined;
+
 export const AdbScrcpyExitedErrorBrand = Symbol.for(
     "AdbScrcpyExitedError.brand",
 );
@@ -305,25 +312,22 @@ export class AdbScrcpyClient<
         return this.#controller as never;
     }
 
-    get deviceMessageParser(): TOptions["createDeviceMessageParser"] extends
-        (() => infer R) | undefined
-        ? R
-        : undefined {
+    get deviceMessageParser(): MaybeReturnType<
+        TOptions["createDeviceMessageParser"]
+    > {
         return this.#deviceMessageParser as never;
     }
 
-    get clipboard(): TOptions["createDeviceMessageParser"] extends
-        (() => infer R extends { clipboard: unknown }) | undefined
-        ? R["clipboard"]
-        : undefined {
+    get clipboard(): MaybeProperty<
+        MaybeReturnType<TOptions["createDeviceMessageParser"]>,
+        "clipboard"
+    > {
         return this.#deviceMessageParser?.clipboard as never;
     }
 
     #uHidManager: ScrcpyUHidManager | undefined;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    get uHidManager(): TOptions["createUHidManager"] extends Function
-        ? ReturnType<TOptions["createUHidManager"]>
-        : undefined {
+
+    get uHidManager(): MaybeReturnType<TOptions["createUHidManager"]> {
         return this.#uHidManager as never;
     }
 
