@@ -3,7 +3,10 @@ import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
 import { Consumable } from "@yume-chan/stream-extra";
 
 import { AndroidKeyEventAction } from "../android/index.js";
-import type { ScrcpyOptions } from "../base/index.js";
+import type {
+    ScrcpyDeviceMessageParser,
+    ScrcpyOptions,
+} from "../base/index.js";
 import type { ScrcpyResizeDisplayControlMessage } from "../index.js";
 import type {
     ScrcpyInjectScrollControlMessage,
@@ -19,13 +22,23 @@ import type { ScrcpyUHidInputControlMessage } from "./uhid.js";
 export class ScrcpyControlMessageWriter {
     #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
     #serializer: ScrcpyControlMessageSerializer;
+    get serializer() {
+        return this.#serializer;
+    }
+    get options() {
+        return this.#serializer.options;
+    }
 
     constructor(
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
         options: ScrcpyOptions<object>,
+        deviceMessageParser: ScrcpyDeviceMessageParser,
     ) {
         this.#writer = writer;
-        this.#serializer = new ScrcpyControlMessageSerializer(options);
+        this.#serializer = new ScrcpyControlMessageSerializer(
+            options,
+            deviceMessageParser,
+        );
     }
 
     write(message: Uint8Array) {

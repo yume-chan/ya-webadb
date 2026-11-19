@@ -7,4 +7,5 @@ export * from "./media.js";
 export * from "./option-value.js";
 export * from "./options.js";
 export * from "./scroll-controller.js";
+export * from "./uhid.js";
 export * from "./video.js";

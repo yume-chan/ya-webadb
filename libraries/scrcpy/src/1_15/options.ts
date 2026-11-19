@@ -2,14 +2,13 @@ import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
 
 import type {
+    MapBoolean,
     ScrcpyDisplay,
     ScrcpyOptions,
     ScrcpyScrollController,
     ScrcpyVideoStream,
     ScrcpyVideoStreamPacket,
 } from "../base/index.js";
-import { ScrcpyDeviceMessageParsers } from "../base/index.js";
-import type { MapBoolean } from "../base/options.js";
 import type {
     ScrcpyBackOrScreenOnControlMessage,
     ScrcpyInjectTouchControlMessage,
@@ -19,12 +18,12 @@ import type {
 
 import type { ComputeOptionTypes, Init } from "./impl/index.js";
 import {
-    ClipboardStream,
     computeOptionValues,
     ControlMessageTypes,
     createMediaStreamTransformer,
     createScrollController,
     Defaults,
+    DeviceMessageParser,
     parseDisplay,
     parseVideoStreamMetadata,
     serialize,
@@ -47,28 +46,23 @@ export class ScrcpyOptions1_15<
         return ControlMessageTypes;
     }
 
-    #clipboard: ClipboardStream | undefined;
-    get clipboard(): MapBoolean<
-        this["value"]["control"],
-        ReadableStream<string>,
-        undefined
-    > {
-        return this.#clipboard as never;
-    }
-
-    #deviceMessageParsers = new ScrcpyDeviceMessageParsers();
-    get deviceMessageParsers() {
-        return this.#deviceMessageParsers;
-    }
-
     constructor(init: TInit) {
         this.value = computeOptionValues(init, Defaults);
+    }
 
-        if (this.value.control) {
-            this.#clipboard = this.#deviceMessageParsers.add(
-                new ClipboardStream(),
-            );
-        }
+    get createDeviceMessageParser(): MapBoolean<
+        this["value"]["control"],
+        () => DeviceMessageParser<this["value"]>,
+        undefined
+    > {
+        return (this.value.control
+            ? () =>
+                  new DeviceMessageParser<this["value"]>(
+                      true,
+                      this.value.control,
+                  )
+            : undefined) satisfies
+            (() => DeviceMessageParser<this["value"]>) | undefined as never;
     }
 
     serialize(): string[] {

@@ -1,8 +1,6 @@
 import type { StructInit } from "@yume-chan/struct";
 import { buffer, string, struct, u16, u8 } from "@yume-chan/struct";
 
-import type { ScrcpyUHidCreateControlMessage } from "../../latest.js";
-
 export const UHidCreateControlMessage = struct(
     {
         // value of `type` can change between versions
@@ -21,7 +19,7 @@ export type UHidCreateControlMessage = StructInit<
 >;
 
 export function serializeUHidCreateControlMessage(
-    message: ScrcpyUHidCreateControlMessage,
+    message: UHidCreateControlMessage,
 ) {
     return UHidCreateControlMessage.serialize(message);
 }

@@ -16,5 +16,6 @@ export {
     SetDisplayPowerControlMessage as ScrcpySetDisplayPowerControlMessage,
     UHidCreateControlMessage as ScrcpyUHidCreateControlMessage,
     UHidOutputDeviceMessage as ScrcpyUHidOutputDeviceMessage,
+    UHidOutputStream as ScrcpyUHidOutputStream,
     VideoCodecOptions as ScrcpyVideoCodecOptions,
 } from "./4_1/impl/index.js";

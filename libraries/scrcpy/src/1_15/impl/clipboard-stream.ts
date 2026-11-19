@@ -3,7 +3,7 @@ import { PushReadableStream } from "@yume-chan/stream-extra";
 import type { AsyncExactReadable } from "@yume-chan/struct";
 import { string, struct, u32 } from "@yume-chan/struct";
 
-import type { ScrcpyDeviceMessageParser } from "../../base/index.js";
+import type { ScrcpyDeviceMessageHandler } from "../../base/index.js";
 
 export const ClipboardDeviceMessage = struct(
     { content: string(u32) },
@@ -12,11 +12,9 @@ export const ClipboardDeviceMessage = struct(
 
 export class ClipboardStream
     extends PushReadableStream<string>
-    implements ScrcpyDeviceMessageParser
+    implements ScrcpyDeviceMessageHandler
 {
     #controller: PushReadableStreamController<string>;
-
-    readonly id = 0;
 
     constructor() {
         let controller!: PushReadableStreamController<string>;
@@ -26,7 +24,7 @@ export class ClipboardStream
         this.#controller = controller;
     }
 
-    async parse(_id: number, stream: AsyncExactReadable): Promise<undefined> {
+    async parse(stream: AsyncExactReadable): Promise<undefined> {
         const message = await ClipboardDeviceMessage.deserialize(stream);
         await this.#controller.enqueue(message.content);
     }

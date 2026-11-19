@@ -6,9 +6,11 @@ import type {
     ScrcpyAudioStreamErroredMetadata,
     ScrcpyAudioStreamPacket,
     ScrcpyAudioStreamSuccessMetadata,
+    ScrcpyDeviceMessageParser,
     ScrcpyDisplay,
     ScrcpyEncoder,
     ScrcpyOptions1_15,
+    ScrcpyUHidManager,
 } from "@yume-chan/scrcpy";
 import {
     DefaultServerPath,
@@ -47,6 +49,13 @@ async function* concatIterables<T>(
     }
 }
 
+type MaybeReturnType<T> = T extends (...args: never[]) => infer R
+    ? R
+    : undefined;
+
+type MaybeProperty<T, K extends PropertyKey> =
+    T extends Record<K, infer R> ? R : undefined;
+
 export const AdbScrcpyExitedErrorBrand = Symbol.for(
     "AdbScrcpyExitedError.brand",
 );
@@ -68,7 +77,9 @@ export class AdbScrcpyExitedError extends Error {
     }
 }
 
-interface AdbScrcpyClientInit<TOptions extends AdbScrcpyOptions<object>> {
+interface AdbScrcpyClientInit<
+    TOptions extends AdbScrcpyOptions<Pick<ScrcpyOptions1_15.Init, "control">>,
+> {
     options: TOptions;
     process: AdbNoneProtocolProcess;
     output: ReadableStream<string>;
@@ -91,7 +102,9 @@ export type AdbScrcpyAudioStreamMetadata =
     | ScrcpyAudioStreamErroredMetadata
     | AdbScrcpyAudioStreamSuccessMetadata;
 
-export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
+export class AdbScrcpyClient<
+    TOptions extends AdbScrcpyOptions<Pick<ScrcpyOptions1_15.Init, "control">>,
+> {
     static async pushServer(
         adb: Adb,
         file: ReadableStream<MaybeConsumable<Uint8Array>>,
@@ -105,7 +118,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
 
     static async start<
         TOptions extends AdbScrcpyOptions<
-            Pick<ScrcpyOptions1_15.Init, "tunnelForward">
+            Pick<ScrcpyOptions1_15.Init, "control" | "tunnelForward">
         >,
     >(
         adb: Adb,
@@ -227,6 +240,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
     }
 
     #options: TOptions;
+    #deviceMessageParser: ScrcpyDeviceMessageParser | undefined;
     get options() {
         return this.#options;
     }
@@ -298,8 +312,23 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
         return this.#controller as never;
     }
 
-    get clipboard(): TOptions["clipboard"] {
-        return this.#options.clipboard;
+    get deviceMessageParser(): MaybeReturnType<
+        TOptions["createDeviceMessageParser"]
+    > {
+        return this.#deviceMessageParser as never;
+    }
+
+    get clipboard(): MaybeProperty<
+        MaybeReturnType<TOptions["createDeviceMessageParser"]>,
+        "clipboard"
+    > {
+        return this.#deviceMessageParser?.clipboard as never;
+    }
+
+    #uHidManager: ScrcpyUHidManager | undefined;
+
+    get uHidManager(): MaybeReturnType<TOptions["createUHidManager"]> {
+        return this.#uHidManager as never;
     }
 
     constructor({
@@ -322,13 +351,20 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
             ? this.#createAudioStream(audioStream)
             : undefined;
 
-        if (controlStream) {
-            this.#controller = new ScrcpyControlMessageWriter(
-                controlStream.writable.getWriter(),
-                options,
-            );
-
+        if (options.createDeviceMessageParser && controlStream) {
+            this.#deviceMessageParser = options.createDeviceMessageParser();
             this.#parseDeviceMessages(controlStream.readable).catch(() => {});
+
+            const writer = controlStream.writable.getWriter();
+            this.#controller = new ScrcpyControlMessageWriter(
+                writer,
+                options,
+                this.#deviceMessageParser,
+            );
+            this.#uHidManager = options.createUHidManager?.(
+                writer,
+                this.#deviceMessageParser,
+            );
         }
     }
 
@@ -342,17 +378,17 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
                     id = result[0]!;
                 } catch (e) {
                     if (e instanceof ExactReadableEndedError) {
-                        this.#options.deviceMessageParsers.close();
+                        this.#deviceMessageParser!.close();
                         break;
                     }
 
                     throw e;
                 }
 
-                await this.#options.deviceMessageParsers.parse(id, buffered);
+                await this.#deviceMessageParser!.parse(id, buffered);
             }
         } catch (e) {
-            this.#options.deviceMessageParsers.error(e);
+            this.#deviceMessageParser!.error(e);
             await tryCancel(buffered);
         }
     }

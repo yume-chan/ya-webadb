@@ -1,5 +1,10 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
-import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
+import type {
+    Consumable,
+    ReadableStream,
+    TransformStream,
+    WritableStreamDefaultWriter,
+} from "@yume-chan/stream-extra";
 
 import type {
     ScrcpyBackOrScreenOnControlMessage,
@@ -7,16 +12,16 @@ import type {
     ScrcpySetClipboardControlMessage,
     ScrcpySetDisplayPowerControlMessage,
     ScrcpyUHidCreateControlMessage,
-    ScrcpyUHidOutputDeviceMessage,
 } from "../latest.js";
 
 import type { ScrcpyAudioStreamMetadata } from "./audio.js";
 import type { ScrcpyControlMessageType } from "./control-message-type.js";
-import type { ScrcpyDeviceMessageParsers } from "./device-message.js";
+import type { ScrcpyDeviceMessageParser } from "./device-message.js";
 import type { ScrcpyDisplay } from "./display.js";
 import type { ScrcpyEncoder } from "./encoder.js";
 import type { ScrcpyVideoStreamPacket } from "./media.js";
 import type { ScrcpyScrollController } from "./scroll-controller.js";
+import type { ScrcpyUHidManager } from "./uhid.js";
 import type { ScrcpyVideoStream } from "./video.js";
 
 export type ScrcpyControlMessageTypeMap = Partial<
@@ -34,12 +39,7 @@ export interface ScrcpyOptions<T extends object> {
 
     value: T;
 
-    readonly clipboard?: ReadableStream<string> | undefined;
-
-    readonly uHidOutput?:
-        ReadableStream<ScrcpyUHidOutputDeviceMessage> | undefined;
-
-    readonly deviceMessageParsers: ScrcpyDeviceMessageParsers;
+    createDeviceMessageParser: (() => ScrcpyDeviceMessageParser) | undefined;
 
     serialize(): string[];
 
@@ -70,6 +70,7 @@ export interface ScrcpyOptions<T extends object> {
 
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
+        deviceMessageParser: ScrcpyDeviceMessageParser,
     ): Uint8Array | [Uint8Array, Promise<void>];
 
     serializeSetDisplayPowerControlMessage(
@@ -81,6 +82,13 @@ export interface ScrcpyOptions<T extends object> {
     serializeUHidCreateControlMessage?(
         message: ScrcpyUHidCreateControlMessage,
     ): Uint8Array;
+
+    createUHidManager?:
+        | ((
+              writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
+              deviceMessageParser: ScrcpyDeviceMessageParser,
+          ) => ScrcpyUHidManager)
+        | undefined;
 }
 
 export interface ScrcpyOptionsListEncoders {

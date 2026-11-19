@@ -1,5 +1,9 @@
 import type { AndroidKeyEventAction } from "../android/index.js";
-import type { ScrcpyOptions, ScrcpyScrollController } from "../base/index.js";
+import type {
+    ScrcpyDeviceMessageParser,
+    ScrcpyOptions,
+    ScrcpyScrollController,
+} from "../base/index.js";
 import { ScrcpyControlMessageType } from "../base/index.js";
 import type {
     ScrcpyInjectScrollControlMessage,
@@ -21,17 +25,28 @@ import {
 
 export class ScrcpyControlMessageSerializer {
     #options: ScrcpyOptions<object>;
-    #scrollController: ScrcpyScrollController;
+    get options() {
+        return this.#options;
+    }
 
-    constructor(options: ScrcpyOptions<object>) {
+    #scrollController: ScrcpyScrollController;
+    #deviceMessageParser: ScrcpyDeviceMessageParser;
+
+    constructor(
+        options: ScrcpyOptions<object>,
+        deviceMessageParser: ScrcpyDeviceMessageParser,
+    ) {
         this.#options = options;
+        this.#deviceMessageParser = deviceMessageParser;
         this.#scrollController = options.createScrollController();
     }
 
     getType(type: ScrcpyControlMessageType): number {
         const value = this.#options.controlMessageTypes[type];
         if (value === undefined) {
-            throw new TypeError(`Invalid control message type: ${type}`);
+            throw new TypeError(
+                `Invalid or unsupported control message type: ${type}`,
+            );
         }
         return value;
     }
@@ -118,15 +133,18 @@ export class ScrcpyControlMessageSerializer {
     }
 
     setClipboard(message: Omit<ScrcpySetClipboardControlMessage, "type">) {
-        return this.#options.serializeSetClipboardControlMessage({
-            ...message,
-            type: this.getType(ScrcpyControlMessageType.SetClipboard),
-        });
+        return this.#options.serializeSetClipboardControlMessage(
+            {
+                ...message,
+                type: this.getType(ScrcpyControlMessageType.SetClipboard),
+            },
+            this.#deviceMessageParser,
+        );
     }
 
     uHidCreate(message: Omit<ScrcpyUHidCreateControlMessage, "type">) {
         if (!this.#options.serializeUHidCreateControlMessage) {
-            throw new Error("UHid not supported");
+            throw new Error("UHID not supported");
         }
 
         return this.#options.serializeUHidCreateControlMessage(

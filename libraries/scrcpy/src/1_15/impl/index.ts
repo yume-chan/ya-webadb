@@ -4,6 +4,7 @@ export * from "./codec-options.js";
 export * from "./compute-option-values.js";
 export * from "./control-message-types.js";
 export * from "./defaults.js";
+export * from "./device-message-parser.js";
 export * from "./init.js";
 export * from "./inject-touch.js";
 export * from "./media-stream-transformer.js";
